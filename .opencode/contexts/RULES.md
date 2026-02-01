@@ -24,3 +24,8 @@
 - User has several years of experience but asks AI "what should I do"
 - Guide on git operations when needed
 - Never push unless explicitly requested
+
+## Decision Making
+- When user asks AI to make a decision (e.g., "you decide", "make the call"), present both the decision AND the reasoning that led to it
+- Explanation should be concise but complete enough to justify the choice
+- This applies to architectural decisions, tool choices, implementation approaches, and any other decision-making scenarios

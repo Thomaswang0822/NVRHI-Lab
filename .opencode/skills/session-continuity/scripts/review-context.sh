@@ -3,7 +3,8 @@
 # Session Continuity - Quick Context Review
 # Reads all context markdown files to get up-to-date with project state
 
-CONTEXT_DIR="../../contexts"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+CONTEXT_DIR="$SCRIPT_DIR/../../../contexts"
 SEPARATOR="========================================"
 
 echo ""
