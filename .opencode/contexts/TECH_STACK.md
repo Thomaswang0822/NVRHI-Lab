@@ -12,10 +12,11 @@
 - **Version Control**: Git
 - **IDE**: TBD
 
-## Frontend (TBD)
-- Requirements: Modern look, NOT ImGui
-- Options under consideration: Qt, Brisk, or other modern C++ GUI framework
-- Goal: Simple, minimal coding effort for UI
+## Frontend/UI
+- **Framework**: wxWidgets
+- **Requirements met**: Modern look, NOT ImGui
+- **Key characteristics**: Pure C++ (no external build tools), clean and navigable codebase, smaller footprint than Qt
+- **Rationale**: "Code-like" framework - user can navigate source to understand features and debug issues
 
 ## Development Environment
 - **OS**: Windows (x64 only for NVRHI)

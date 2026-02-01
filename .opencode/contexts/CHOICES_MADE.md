@@ -19,8 +19,10 @@ Though DX11 is legacy, it's used in user's daily work together with DX12.
 We will decide optional features later.
 
 ## Frontend/UI
-- **Decision pending**: Modern GUI framework (Qt, Brisk, or other)
-- **Constraint**: NOT ImGui (too old-school look)
+- **Framework**: wxWidgets
+  - Chosen for: Pure C++ (no external build tools like moc), clean and navigable codebase, smaller footprint than Qt
+  - Constraint met: Not ImGui (too old-school look)
+  - Rationale: User requirement for "code-like" framework - ability to navigate source to understand features and debug issues
 
 ## Language Preference
 - When explaining concepts, include Mandarin translation in parentheses
