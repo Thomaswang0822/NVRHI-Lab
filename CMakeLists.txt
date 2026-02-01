@@ -12,6 +12,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 set(wxBUILD_SHARED OFF)
 add_subdirectory(thirdparty/wxWidgets)
+
+set(NVRHI_WITH_DX11 ON)
+set(NVRHI_WITH_DX12 ON)
+set(NVRHI_WITH_VULKAN ON)
+set(NVRHI_WITH_VALIDATION ON)
 add_subdirectory(thirdparty/NVRHI)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
@@ -22,9 +27,9 @@ else()
     add_executable(${PROJECT_NAME} ${SOURCES})
 endif()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE 
-    wx::core wx::base 
-    nvrhi
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    wx::core wx::base # wxWidgets
+    nvrhi nvrhi_d3d11 nvrhi_d3d12 nvrhi_vk
 )
 
 if(MSVC)

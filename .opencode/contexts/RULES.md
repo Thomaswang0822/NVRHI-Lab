@@ -13,7 +13,8 @@
 ## Code Style
 - Follow existing code conventions in the codebase
 - Use libraries/frameworks already present in the project
-- **NO comments** unless specifically requested
+- Add **concise and useful comments at important locations** (not every line needs comments)
+- Comments should explain "why" not "what" (code should be self-documenting for "what")
 
 ## Execution Mode
 - Before making non-trivial file changes, ask for confirmation
