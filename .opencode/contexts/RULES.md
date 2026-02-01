@@ -19,6 +19,8 @@
 - Before making non-trivial file changes, ask for confirmation
 - Run lint/typecheck commands if available after changes
 - Only commit when explicitly asked
+- User performs key build tasks: CMake generate, build execution, test running
+- AI prepares code and configuration, user executes build commands
 
 ## Git Workflow
 - User has several years of experience but asks AI "what should I do"
