@@ -1,9 +1,12 @@
 [submodule "thirdparty/NVRHI"]
 	path = thirdparty/NVRHI
 	url = https://github.com/NVIDIA-RTX/NVRHI.git
+	branch = main
 [submodule "thirdparty/awesome-claude-skills"]
 	path = thirdparty/awesome-claude-skills
 	url = https://github.com/ComposioHQ/awesome-claude-skills.git
+	branch = master
 [submodule "thirdparty/wxWidgets"]
 	path = thirdparty/wxWidgets
 	url = https://github.com/wxWidgets/wxWidgets.git
+	branch = master
