@@ -36,3 +36,11 @@ We will decide optional features later.
 - **Backend approach**: All backends enabled from Phase 1 (app relaunch to switch, not runtime)
 - **Validation**: NVRHI validation layer enabled by default for debugging
 - **Geometries**: Hardcoded (no fancy arena switching, focus on rendering API features)
+
+## Device Manager Design
+- **Location**: `src/graphics/device_manager`
+- **Purpose**: Centralized device and swapchain management across D3D11/D3D12/Vulkan
+- **Backend detection**: `GetBackendName()` returns string representation ("D3D11", "D3D12", "Vulkan")
+- **Fallback strategy**: Try D3D12 first, fall back to D3D11 if unavailable
+- **Swapchain**: Platform-specific creation (DXGI), then wrapped as NVRHI textures
+- **Frame synchronization**: Fence-based for D3D12 (per-backbuffer tracking)

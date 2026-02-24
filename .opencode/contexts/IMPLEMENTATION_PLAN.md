@@ -34,8 +34,8 @@ NVRHI-Lab/
 **Goal**: Get NVRHI rendering a colored triangle on screen
 
 **Tasks:**
-- [ ] Create Device Manager (`src/graphics/device_manager.h`) - Initialize NVRHI device for DX11/DX12/Vulkan, create swap chain texture wrapper, set up framebuffer
-- [ ] Create Basic Renderer (`src/graphics/graphics_renderer.h`) - Simple graphics pipeline (vertex + pixel shaders), command list recording and execution, present to screen
+- [x] Create Device Manager (`src/graphics/device_manager`) - Initialize NVRHI device for DX11/DX12/Vulkan, create swap chain texture wrapper, set up framebuffer
+- [ ] Create Basic Renderer (`src/graphics/graphics_renderer`) - Simple graphics pipeline (vertex + pixel shaders), command list recording and execution, present to screen
 - [ ] Integrate with wxWidgets - Get window handle from wxFrame, pass to device manager, render loop triggered by wxWidgets timer
 - [ ] Test: Render a red triangle → Verify all backends work (DX11/DX12/Vulkan via app relaunch)
 

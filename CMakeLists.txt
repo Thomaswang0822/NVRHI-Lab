@@ -32,6 +32,14 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     nvrhi nvrhi_d3d11 nvrhi_d3d12 nvrhi_vk
 )
 
+if(WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        dxgi.lib
+        d3d11.lib
+        d3d12.lib
+    )
+endif()
+
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX-)
 else()
