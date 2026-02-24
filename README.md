@@ -24,7 +24,7 @@ NVRHI-Lab provides an interactive testbed for exploring graphics API concepts th
 ```bash
 git submodule update --init --recursive
 cd build
-cmake .. -G "Visual Studio 17 2026" -A x64
+cmake .. -G "Visual Studio 18 2026" -A x64
 ```
 
 Open `NVRHI-Lab.slnx` in Visual Studio and build.
