@@ -5,13 +5,16 @@
 ```
 NVRHI-Lab/
 ├── src/              - All source code
-│   ├── main.cpp      - Application entry point
-│   └── [components]/ - Feature modules (textures/, common/, etc.)
-├── build/            - CMake working directory
-├── bin/              - Executables and runtime resources
+│   ├── shaders/      - HLSL shader files (.hlsl)
+│   ├── graphics/     - Graphics components (device_manager, basic_renderer)
+│   ├── frontend/     - wxWidgets UI components
+│   └── main.cpp      - Application entry point
+├── cmake/           - CMake modules (shaders.cmake)
+├── build/           - CMake working directory
+├── bin/              - Executables and runtime resources (including shaders/)
 ├── docs/             - Documentation
-├── thirdparty/       - Third-party libraries (NVRHI)
-└── .opencode/        - AI agent context and skills
+├── thirdparty/       - Third-party libraries (NVRHI, wxWidgets)
+└── .opencode/       - AI agent context and skills
 ```
 
 ## Learning Sequence
@@ -35,9 +38,13 @@ NVRHI-Lab/
 
 **Tasks:**
 - [x] Create Device Manager (`src/graphics/device_manager`) - Initialize NVRHI device for DX11/DX12/Vulkan, create swap chain texture wrapper, set up framebuffer
-- [ ] Create Basic Renderer (`src/graphics/graphics_renderer`) - Simple graphics pipeline (vertex + pixel shaders), command list recording and execution, present to screen
+- [x] Create shader files (`src/shaders/triangle.vs.hlsl`, `src/shaders/triangle.ps.hlsl`) - Simple vertex + pixel shaders
+- [x] Setup CMake shader compilation (`cmake/shaders.cmake`) - VS native HLSL compiler with SM 6.4, configured via VS_SHADER_TYPE/VS_SHADER_MODEL properties
+- [ ] Create Basic Renderer (`src/graphics/basic_renderer.h`) - Graphics pipeline, command list
 - [ ] Integrate with wxWidgets - Get window handle from wxFrame, pass to device manager, render loop triggered by wxWidgets timer
-- [ ] Test: Render a red triangle → Verify all backends work (DX11/DX12/Vulkan via app relaunch)
+- [ ] Test: Render a colored triangle → Verify all backends work (DX11/D3D12/Vulkan via app relaunch)
+
+**Solution**: Use CMake `set_source_files_properties()` with VS-specific properties (`VS_SHADER_TYPE`, `VS_SHADER_MODEL`, `VS_SHADER_ENTRYPOINT`, `VS_SHADER_OBJECT_FILE_NAME`) to configure VS's native HLSL compiler correctly.
 
 **NVRHI Concepts**: Device creation, swap chain, pipelines, command lists
 

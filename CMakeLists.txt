@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
@@ -21,8 +21,15 @@ add_subdirectory(thirdparty/NVRHI)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 
+# Include shader compilation module
+include(cmake/shaders.cmake)
+
 if(WIN32)
     add_executable(${PROJECT_NAME} WIN32 ${SOURCES})
+    setup_shader_compilation(${PROJECT_NAME})
+    # Add shaders to target so they appear in VS Solution Explorer
+    target_sources(${PROJECT_NAME} PRIVATE ${SHADERS})
+    source_group("Shader Files" FILES ${SHADERS})
 else()
     add_executable(${PROJECT_NAME} ${SOURCES})
 endif()

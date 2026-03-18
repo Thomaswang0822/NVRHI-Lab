@@ -23,5 +23,5 @@ build/
 bin/
 lib/
 
-.vscode
+# .vscode
 .agents

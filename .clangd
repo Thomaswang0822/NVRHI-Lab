@@ -1,0 +1,6 @@
+CompileFlags:
+  Add:
+    - "-Ithirdparty/NVRHI/include"
+    - "-Ithirdparty/wxWidgets/include"
+    - "-Ithirdparty/wxWidgets/include/msvc"
+    - "-std=c++20"

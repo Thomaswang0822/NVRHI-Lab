@@ -44,3 +44,14 @@ We will decide optional features later.
 - **Fallback strategy**: Try D3D12 first, fall back to D3D11 if unavailable
 - **Swapchain**: Platform-specific creation (DXGI), then wrapped as NVRHI textures
 - **Frame synchronization**: Fence-based for D3D12 (per-backbuffer tracking)
+
+## Shader Compilation
+- **Compiler**: DXC (DirectX Shader Compiler) - NOT fxc (legacy)
+- **Shader Model**: 6.4 (latest supported by DXC)
+- **Approach**: CMake-based compilation with custom commands
+- **Files**: 
+  - `src/shaders/triangle.vs.hlsl` - Vertex shader
+  - `src/shaders/triangle.ps.hlsl` - Pixel shader
+- **Output**: `bin/shaders/*.cso`
+- **CMake module**: `cmake/shaders.cmake`
+- **Current Issue (UNRESOLVED)**: When .hlsl files are added to VS via target_sources(), VS tries to compile them with default settings (conflicting with our custom PRE_LINK command). Need to find a way to show shaders in VS Solution Explorer without VS trying to compile them.
