@@ -29,12 +29,12 @@ This document outlines the incremental implementation path from a minimal triang
 **Success Criteria**: Colored triangle renders on screen with each backend
 
 **NVRHI Concepts Learned**:
-- Device creation (d3d11, d3d12, vulkan)
-- Swap chain texture wrapper
-- Framebuffer setup
+- Device creation (D3D11, D3D12, Vulkan)
+- Swap chain and backbuffer management
 - Graphics pipeline state objects
-- Command list recording
-- Presenting
+- Command list recording and submission
+- Resource state transitions (barriers)
+- Frame synchronization
 
 ---
 

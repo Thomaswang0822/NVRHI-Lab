@@ -35,18 +35,29 @@
 
 ## Documentation Philosophy
 
-### User-Facing Docs (docs/)
-- **Focus on concepts**, not implementation details
-- Explain WHAT and WHY, minimize HOW
-- Code snippets should illustrate concepts, not be copy-paste implementations
-- Use analogies and high-level explanations
-- Target audience: Users of the application who want to understand NVRHI concepts
+### Agent-Facing Context (`.opencode/contexts/`)
+**Target audience**: AI agent continuing the work
 
-### Agent-Facing Docs (.opencode/contexts/)
-- **Implementation details are welcome here**
-- Record architectural decisions, file locations, patterns
-- Include specific function names and design choices
-- Target audience: AI agents continuing the work
+| Include | Exclude |
+|---------|---------|
+| Decisions affecting future work | Implementation details ("how") |
+| Constraints (C++20, static libs) | One-time setup facts |
+| Conventions (Mandarin translations) | Historical context |
+| Learning boundaries | File paths, code snippets |
+
+**Principle**: If it affects how AI should behave or decisions it must respect → Include. Otherwise → Exclude.
+
+### User-Facing Docs (`docs/`)
+**Target audience**: Someone learning NVRHI concepts through this project
+
+| Include | Exclude |
+|---------|---------|
+| **Concepts** - What is a pipeline state? | Implementation details |
+| **Why** - Why explicit resource barriers? | Code that can be read in source |
+| **Patterns** - Render loop structure | Step-by-step tutorials |
+| **NVRHI API insights** | Build instructions (belongs in README) |
+
+**Principle**: Focus on WHAT and WHY, minimize HOW. Code snippets illustrate concepts, not copy-paste implementations.
 
 ### File Naming Conventions
 - When referring to header and implementation files together, omit the extension: `device_manager`

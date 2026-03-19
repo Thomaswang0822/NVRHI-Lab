@@ -10,6 +10,7 @@
 
 #include <stdexcept>
 #include <sstream>
+#include <iostream>
 
 #ifdef WIN32
 #include <windows.h>
@@ -19,7 +20,25 @@ namespace nvrhi_lab {
 
 namespace {
 
-// Helper to convert NVRHI format to DXGI format
+class MessageCallback : public nvrhi::IMessageCallback {
+public:
+    void message(nvrhi::MessageSeverity severity, const char* messageText) override {
+        switch (severity) {
+            case nvrhi::MessageSeverity::Error:
+                std::cerr << "[NVRHI Error] " << messageText << std::endl;
+                break;
+            case nvrhi::MessageSeverity::Warning:
+                std::cerr << "[NVRHI Warning] " << messageText << std::endl;
+                break;
+            case nvrhi::MessageSeverity::Info:
+                std::cout << "[NVRHI Info] " << messageText << std::endl;
+                break;
+        }
+    }
+};
+
+static MessageCallback g_MessageCallback;
+
 DXGI_FORMAT ConvertFormat(nvrhi::Format format) {
     return nvrhi::d3d12::convertFormat(format);
 }
@@ -38,7 +57,8 @@ void GetWindowClientSize(void* windowHandle, uint32_t& width, uint32_t& height) 
 DeviceManager::DeviceManager() = default;
 
 DeviceManager::~DeviceManager() {
-    Shutdown();
+    if (m_Initialized) // only shutdown if we initialized
+        Shutdown();
 }
 
 bool DeviceManager::Initialize(const DeviceManagerDesc& desc, void* windowHandle) {
@@ -76,7 +96,10 @@ bool DeviceManager::Initialize(const DeviceManagerDesc& desc, void* windowHandle
 }
 
 void DeviceManager::Shutdown() {
-    // Release NVRHI objects first
+    if (!m_Initialized) // make Shutdown idempotent
+        return;
+
+    // Release NVRHI objects
     m_SwapChainBuffers.clear();
     m_ValidationLayer = nullptr;
     m_Device = nullptr;
@@ -214,7 +237,7 @@ bool DeviceManager::CreateD3D11Device() {
     // Create NVRHI device
     nvrhi::d3d11::DeviceDesc nvrhiDesc;
     nvrhiDesc.context = context;
-    // nvrhiDesc.messageCallback = ...; // Could add error callback here
+    nvrhiDesc.messageCallback = &g_MessageCallback;
 
     nvrhi::DeviceHandle nvrhiDevice = nvrhi::d3d11::createDevice(nvrhiDesc);
     if (!nvrhiDevice) {
@@ -386,7 +409,7 @@ bool DeviceManager::CreateD3D12Device() {
     nvrhi::d3d12::DeviceDesc nvrhiDesc;
     nvrhiDesc.pDevice = device;
     nvrhiDesc.pGraphicsCommandQueue = commandQueue;
-    // nvrhiDesc.errorCB = ...; // Could add error callback here
+    nvrhiDesc.errorCB = &g_MessageCallback;
 
     nvrhi::DeviceHandle nvrhiDevice = nvrhi::d3d12::createDevice(nvrhiDesc);
     if (!nvrhiDevice) {
@@ -490,6 +513,9 @@ bool DeviceManager::CreateD3D12SwapChain() {
 }
 
 void DeviceManager::DestroyD3D12() {
+    // ensure GPU is idle before releasing resources
+    WaitForGpuIdle();
+
     if (m_D3D12FenceEvent) {
         CloseHandle(static_cast<HANDLE>(m_D3D12FenceEvent));
         m_D3D12FenceEvent = nullptr;
@@ -525,6 +551,26 @@ bool DeviceManager::CreateVulkanSwapChain() {
 
 void DeviceManager::DestroyVulkan() {
     // Not implemented yet
+}
+
+void DeviceManager::WaitForGpuIdle()
+{
+    if (!m_D3D12CommandQueue || !m_D3D12Fence || !m_D3D12FenceEvent)
+        return;
+
+    ID3D12CommandQueue* queue = static_cast<ID3D12CommandQueue*>(m_D3D12CommandQueue);
+    ID3D12Fence* fence = static_cast<ID3D12Fence*>(m_D3D12Fence);
+    HANDLE eventHandle = static_cast<HANDLE>(m_D3D12FenceEvent);
+
+    // Increment fence value and signal the queue
+    const uint64_t fenceToWait = ++m_D3D12FenceValue;
+    queue->Signal(fence, fenceToWait);
+
+    // Wait until the fence is completed
+    if (fence->GetCompletedValue() < fenceToWait) {
+        fence->SetEventOnCompletion(fenceToWait, eventHandle);
+        WaitForSingleObject(eventHandle, INFINITE);
+    }
 }
 
 } // namespace nvrhi_lab

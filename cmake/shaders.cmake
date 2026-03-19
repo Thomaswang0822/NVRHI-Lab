@@ -20,7 +20,7 @@ function(setup_shader_compilation TARGET_NAME)
             VS_SHADER_TYPE "Vertex"
             VS_SHADER_MODEL "6.4"
             VS_SHADER_ENTRYPOINT "main"
-            VS_SHADER_OBJECT_FILE_NAME "triangle.vs.cso"
+            VS_SHADER_OBJECT_FILE_NAME "shaders/triangle.vs.cso"
     )
 
     # Configure pixel shader for VS native compilation
@@ -30,6 +30,6 @@ function(setup_shader_compilation TARGET_NAME)
             VS_SHADER_TYPE "Pixel"
             VS_SHADER_MODEL "6.4"
             VS_SHADER_ENTRYPOINT "main"
-            VS_SHADER_OBJECT_FILE_NAME "triangle.ps.cso"
+            VS_SHADER_OBJECT_FILE_NAME "shaders/triangle.ps.cso"
     )
 endfunction()

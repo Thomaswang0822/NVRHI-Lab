@@ -1,5 +1,6 @@
 #include "my_app.h"
 #include "../graphics/device_manager.h"
+#include "../graphics/basic_renderer.h"
 
 #include <wx/msgdlg.h>
 
@@ -40,11 +41,20 @@ bool MyApp::OnInit() {
                m_DeviceManager->GetBackBufferCount());
     frame->SetStatusText(msg);
     
+    // Create and initialize BasicRenderer
+    m_Renderer = std::make_unique<nvrhi_lab::BasicRenderer>();
+    if (!m_Renderer->Initialize(m_DeviceManager.get())) {
+        wxMessageBox("Failed to initialize BasicRenderer!", "Error", wxOK | wxICON_ERROR);
+        return false;
+    }
+    
+    frame->SetRenderer(m_Renderer.get());
+    
     return true;
 }
 
 int MyApp::OnExit() {
-    // Device manager will be automatically cleaned up
+    m_Renderer.reset();
     m_DeviceManager.reset();
     return wxApp::OnExit();
 }
@@ -68,10 +78,19 @@ MyFrame::MyFrame()
 
     CreateStatusBar();
     SetStatusText("Initializing...");
+    
+    m_RenderTimer = new wxTimer(this);
 }
 
 void MyFrame::SetDeviceManager(nvrhi_lab::DeviceManager* deviceManager) {
     m_DeviceManager = deviceManager;
+}
+
+void MyFrame::SetRenderer(nvrhi_lab::BasicRenderer* renderer) {
+    m_Renderer = renderer;
+    if (m_RenderTimer) {
+        m_RenderTimer->Start(16);  // ~60 FPS
+    }
 }
 
 void MyFrame::OnExit(wxCommandEvent& event) {
@@ -96,8 +115,17 @@ void MyFrame::OnHello(wxCommandEvent& event) {
     }
 }
 
+void MyFrame::OnRenderTimer(wxTimerEvent& event) {
+    if (m_DeviceManager && m_Renderer) {
+        m_DeviceManager->BeginFrame();
+        m_Renderer->Render();
+        m_DeviceManager->Present();
+    }
+}
+
 wxBEGIN_EVENT_TABLE(MyFrame, wxFrame)
     EVT_MENU(wxID_PRINT, MyFrame::OnHello)
     EVT_MENU(wxID_EXIT, MyFrame::OnExit)
     EVT_MENU(wxID_ABOUT, MyFrame::OnAbout)
+    EVT_TIMER(wxID_ANY, MyFrame::OnRenderTimer)
 wxEND_EVENT_TABLE()

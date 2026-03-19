@@ -40,18 +40,16 @@ We will decide optional features later.
 ## Device Manager Design
 - **Location**: `src/graphics/device_manager`
 - **Purpose**: Centralized device and swapchain management across D3D11/D3D12/Vulkan
-- **Backend detection**: `GetBackendName()` returns string representation ("D3D11", "D3D12", "Vulkan")
 - **Fallback strategy**: Try D3D12 first, fall back to D3D11 if unavailable
-- **Swapchain**: Platform-specific creation (DXGI), then wrapped as NVRHI textures
 - **Frame synchronization**: Fence-based for D3D12 (per-backbuffer tracking)
 
+## Basic Renderer Design
+- **Location**: `src/graphics/basic_renderer`
+- **Purpose**: Renders a simple colored triangle for Phase 1 testing
+- **Render loop**: `BeginFrame()` → `Render()` → `Present()` via wxTimer
+
 ## Shader Compilation
-- **Compiler**: DXC (DirectX Shader Compiler) - NOT fxc (legacy)
-- **Shader Model**: 6.4 (latest supported by DXC)
-- **Approach**: CMake-based compilation with custom commands
-- **Files**: 
-  - `src/shaders/triangle.vs.hlsl` - Vertex shader
-  - `src/shaders/triangle.ps.hlsl` - Pixel shader
+- **Compiler**: VS native HLSL compiler (via CMake properties)
+- **Shader Model**: 6.4
+- **Approach**: CMake `set_source_files_properties()` with `VS_SHADER_TYPE`, `VS_SHADER_MODEL`, `VS_SHADER_ENTRYPOINT`, `VS_SHADER_OBJECT_FILE_NAME`
 - **Output**: `bin/shaders/*.cso`
-- **CMake module**: `cmake/shaders.cmake`
-- **Current Issue (UNRESOLVED)**: When .hlsl files are added to VS via target_sources(), VS tries to compile them with default settings (conflicting with our custom PRE_LINK command). Need to find a way to show shaders in VS Solution Explorer without VS trying to compile them.

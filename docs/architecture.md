@@ -11,7 +11,7 @@ NVRHI-Lab/
 │   │   └── ...
 │   ├── graphics/             - NVRHI integration layer
 │   │   ├── device_manager.h/cpp   - NVRHI device and swap chain management
-│   │   ├── graphics_renderer.h/cpp - Main rendering pipeline
+│   │   ├── basic_renderer.h/cpp   - Triangle rendering for Phase 1
 │   │   ├── scene_object.h/cpp     - Base class for renderable objects
 │   │   ├── target.h/cpp           - Interactive target objects
 │   │   ├── background_wall.h/cpp   - Background geometry
@@ -53,16 +53,14 @@ DeviceManager::present()
 ### Key Components
 
 **DeviceManager**
-- Wraps NVRHI device creation for DX11/DX12/Vulkan
-- Manages swap chain textures and framebuffers
-- Handles frame synchronization (begin/end frame)
-- Backend selection on startup
+- Creates NVRHI device for D3D11/D3D12/Vulkan
+- Manages swap chain and backbuffers
+- Handles frame synchronization
 
-**GraphicsRenderer**
-- Owns graphics pipeline state objects
+**BasicRenderer**
+- Renders triangle for Phase 1 testing
+- Owns pipeline state, shaders, vertex buffer
 - Records command lists
-- Manages shader compilation
-- Coordinates scene rendering
 
 **SceneObject (Base Class)**
 - Owns resources (buffers, textures, pipeline states)
@@ -79,20 +77,14 @@ DeviceManager::present()
 **Initialization:**
 ```
 Application Startup → Backend Selection → DeviceManager Creation
-→ Window Handle → Swap Chain Setup → GraphicsRenderer Initialization
-→ Scene Objects Creation → Render Loop Start
+→ Window Handle → Swap Chain Setup → BasicRenderer Initialization
+→ Render Loop Start
 ```
 
 **Frame Render:**
 ```
-Timer Tick → beginFrame() → Clear Render Target
-→ foreach SceneObject: render() → endFrame() → present()
-```
-
-**Resource Management:**
-```
-SceneObject owns buffers/textures → DeviceManager tracks resource lifetime
-→ NVRHI automatic resource destruction → No manual cleanup needed
+Timer Tick → BeginFrame() → BasicRenderer::Render()
+→ Command List Submission → Present()
 ```
 
 ## Backend Abstraction

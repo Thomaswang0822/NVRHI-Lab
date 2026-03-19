@@ -1,4 +1,5 @@
 #include "graphics/device_manager.h"
+#include "graphics/basic_renderer.h"
 #include "frontend/my_app.h"
 
 #include <wx/wx.h>

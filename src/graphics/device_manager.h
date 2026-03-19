@@ -91,6 +91,8 @@ private:
     void DestroyD3D11();
     void DestroyD3D12();
     void DestroyVulkan();
+
+    void WaitForGpuIdle();
 };
 
 } // namespace nvrhi_lab
