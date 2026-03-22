@@ -33,6 +33,35 @@
 - Explanation should be concise but complete enough to justify the choice
 - This applies to architectural decisions, tool choices, implementation approaches, and any other decision-making scenarios
 
+## Resource Management
+
+### RAII Principle
+**Resources are acquired in constructors and released in destructors.** Let object lifetime manage resource lifetime.
+
+| Pattern | Usage |
+|---------|-------|
+| `WRL::ComPtr<T>` | Auto-Release for COM objects |
+| `std::unique_ptr<T>` | Single-owner smart pointer |
+| `nvrhi::DeviceHandle` | NVRHI's ref-counted handles |
+| Value members | Objects that live with their owner (e.g., `wxTimer m_Timer`) |
+
+**Anti-patterns**:
+```cpp
+// ❌ BAD: Manual memory + async callback
+wxTimer* m_Timer = new wxTimer(this);
+m_Timer->Start(16);
+// Timer can fire after this object destroyed!
+
+// ✅ GOOD: Value member
+wxTimer m_Timer{this};  // Lives with owner
+m_Timer.Start(16);      // Auto-stopped on destruction
+```
+
+### Ownership Rules
+- **Raw pointers passed to NVRHI** → NVRHI owns (via AddRef), don't Release
+- **ComPtr/RefCountPtr** → Auto-release on destruction
+- **Value members** → Lifetime tied to containing object
+
 ## Documentation Philosophy
 
 ### Agent-Facing Context (`.opencode/contexts/`)

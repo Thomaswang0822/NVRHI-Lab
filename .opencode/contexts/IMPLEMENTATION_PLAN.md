@@ -6,7 +6,10 @@
 NVRHI-Lab/
 ├── src/              - All source code
 │   ├── shaders/      - HLSL shader files (.hlsl)
-│   ├── graphics/     - Graphics components (device_manager, basic_renderer)
+│   ├── graphics/     - Graphics components
+│   │   ├── platform/ - Platform abstraction (d3d12_context, etc.)
+│   │   ├── device_manager - NVRHI device and swap chain management
+│   │   └── basic_renderer - Triangle rendering for Phase 1
 │   ├── frontend/     - wxWidgets UI components
 │   └── main.cpp      - Application entry point
 ├── cmake/           - CMake modules (shaders.cmake)
@@ -36,13 +39,18 @@ NVRHI-Lab/
 ### Phase 1: NVRHI Foundation (Priority: HIGH)
 **Goal**: Get NVRHI rendering a colored triangle on screen
 
+**Status**: In Progress (D3D12 works, D3D11/Vulkan not implemented, rendering bug exists)
+
 **Tasks:**
 - [x] Create Device Manager (`src/graphics/device_manager`)
 - [x] Create shader files (`src/shaders/triangle.vs.hlsl`, `src/shaders/triangle.ps.hlsl`)
 - [x] Setup CMake shader compilation (`cmake/shaders.cmake`)
 - [x] Create Basic Renderer (`src/graphics/basic_renderer`)
 - [x] Integrate with wxWidgets render loop
-- [ ] Test: Colored triangle renders on D3D11/D3D12
+- [x] Refactor to IPlatformContext (RAII-compliant)
+- [ ] Test: Colored triangle renders on D3D12 (visible bug: dark blue background only)
+- [ ] Implement D3D11 backend
+- [ ] Implement Vulkan backend
 
 **NVRHI Concepts**: Device creation, swap chain, pipelines, command lists, resource barriers
 

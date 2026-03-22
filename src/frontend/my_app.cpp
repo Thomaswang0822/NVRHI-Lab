@@ -61,7 +61,9 @@ int MyApp::OnExit() {
 
 // Frame implementation
 MyFrame::MyFrame()
-    : wxFrame(nullptr, wxID_ANY, "NVRHI Lab", wxDefaultPosition, wxSize(1280, 720)) {
+    : wxFrame(nullptr, wxID_ANY, "NVRHI Lab", wxDefaultPosition, wxSize(1280, 720)),
+      m_RenderTimer(this)
+{
     wxMenu* menuFile = new wxMenu;
     menuFile->Append(wxID_PRINT, "&Hello...\tCtrl-H", "Help string shown in status bar for this menu item");
     menuFile->AppendSeparator();
@@ -79,7 +81,6 @@ MyFrame::MyFrame()
     CreateStatusBar();
     SetStatusText("Initializing...");
     
-    m_RenderTimer = new wxTimer(this);
 }
 
 void MyFrame::SetDeviceManager(nvrhi_lab::DeviceManager* deviceManager) {
@@ -88,12 +89,13 @@ void MyFrame::SetDeviceManager(nvrhi_lab::DeviceManager* deviceManager) {
 
 void MyFrame::SetRenderer(nvrhi_lab::BasicRenderer* renderer) {
     m_Renderer = renderer;
-    if (m_RenderTimer) {
-        m_RenderTimer->Start(16);  // ~60 FPS
-    }
+    m_RenderTimer.Start(16);  // ~60 FPS
 }
 
 void MyFrame::OnExit(wxCommandEvent& event) {
+    if (m_RenderTimer.IsRunning()) {
+        m_RenderTimer.Stop();
+    }
     Close(true);
 }
 

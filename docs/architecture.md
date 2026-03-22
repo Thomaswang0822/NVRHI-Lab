@@ -10,8 +10,12 @@ NVRHI-Lab/
 │   │   ├── my_app.h/cpp     - Main application and window frame
 │   │   └── ...
 │   ├── graphics/             - NVRHI integration layer
-│   │   ├── device_manager.h/cpp   - NVRHI device and swap chain management
-│   │   ├── basic_renderer.h/cpp   - Triangle rendering for Phase 1
+│   │   ├── platform/          - Platform abstraction (D3D12Context, etc.)
+│   │   │   ├── platform_context.h - Interface
+│   │   │   ├── d3d12_context.h/cpp - D3D12 implementation
+│   │   │   └── ...                 - Future: D3D11, Vulkan
+│   │   ├── device_manager.h/cpp - Pure NVRHI device management
+│   │   ├── basic_renderer.h/cpp - Triangle rendering for Phase 1
 │   │   ├── scene_object.h/cpp     - Base class for renderable objects
 │   │   ├── target.h/cpp           - Interactive target objects
 │   │   ├── background_wall.h/cpp   - Background geometry
@@ -52,10 +56,15 @@ DeviceManager::present()
 
 ### Key Components
 
+**IPlatformContext**
+- Interface for platform-specific device creation
+- Implementations: D3D12Context (raw D3D12/DXGI), future: D3D11Context, VulkanContext
+- Isolates all raw backend API calls
+
 **DeviceManager**
-- Creates NVRHI device for D3D11/D3D12/Vulkan
-- Manages swap chain and backbuffers
-- Handles frame synchronization
+- Uses IPlatformContext to create NVRHI device
+- Pure NVRHI API after initialization - no raw D3D12/D3D11/Vulkan pointers
+- Manages frame timing and presentation
 
 **BasicRenderer**
 - Renders triangle for Phase 1 testing
@@ -89,11 +98,11 @@ Timer Tick → BeginFrame() → BasicRenderer::Render()
 
 ## Backend Abstraction
 
-All graphics code uses NVRHI API - backend-specific differences are abstracted:
+Graphics code uses pure NVRHI API - backend-specific differences isolated:
 
-- **Device creation**: `nvrhi::d3d11::createDevice()`, `nvrhi::d3d12::createDevice()`, `nvrhi::vulkan::createDevice()`
-- **Resources**: Same API for all backends (textures, buffers, etc.)
+- **Device creation**: IPlatformContext implementations create raw objects, return NVRHI device
+- **Resources**: Same NVRHI API for all backends (textures, buffers, etc.)
 - **Commands**: `nvrhi::CommandList` interface is backend-agnostic
-- **Pipelines**: Same pipeline state objects across backends
+- **Platform isolation**: `platform/` folder contains backend implementations
 
 Backend switching only requires app restart - no code changes needed.

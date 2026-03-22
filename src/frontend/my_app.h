@@ -32,7 +32,7 @@ private:
 
     nvrhi_lab::DeviceManager* m_DeviceManager = nullptr;
     nvrhi_lab::BasicRenderer* m_Renderer = nullptr;
-    wxTimer* m_RenderTimer = nullptr;
+    wxTimer m_RenderTimer;
 
     wxDECLARE_EVENT_TABLE();
 };

@@ -42,6 +42,7 @@ We will decide optional features later.
 - **Purpose**: Centralized device and swapchain management across D3D11/D3D12/Vulkan
 - **Fallback strategy**: Try D3D12 first, fall back to D3D11 if unavailable
 - **Frame synchronization**: Fence-based for D3D12 (per-backbuffer tracking)
+- **Architecture**: Uses `IPlatformContext` interface to isolate raw backend code; DeviceManager never touches raw D3D12/D3D11/Vulkan pointers
 
 ## Basic Renderer Design
 - **Location**: `src/graphics/basic_renderer`
