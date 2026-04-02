@@ -25,7 +25,8 @@ private:
     nvrhi::ShaderHandle m_PixelShader;
     nvrhi::GraphicsPipelineHandle m_Pipeline;
     nvrhi::BufferHandle m_VertexBuffer;
-	nvrhi::VertexBufferBinding m_vertexBufferBinding;
+    nvrhi::VertexBufferBinding m_vertexBufferBinding;
+    nvrhi::TextureHandle m_DepthBuffer;
     nvrhi::CommandListHandle m_CommandList;
 };
 

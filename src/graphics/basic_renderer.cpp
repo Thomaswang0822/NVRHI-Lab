@@ -124,12 +124,30 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
     }
 
     m_vertexBufferBinding.setBuffer(m_VertexBuffer).setSlot(0).setOffset(0);
+
+    auto depthDesc = nvrhi::TextureDesc()
+        .setDimension(nvrhi::TextureDimension::Texture2D)
+        .setWidth(m_DeviceManager->GetWidth())
+        .setHeight(m_DeviceManager->GetHeight())
+        .setFormat(nvrhi::Format::D32)
+        .setIsRenderTarget(true)
+        .setClearValue(1.0f)
+        .setUseClearValue(true)
+        .setDebugName("DepthBuffer")
+        .enableAutomaticStateTracking(nvrhi::ResourceStates::DepthWrite);
+    
+    m_DepthBuffer = device->createTexture(depthDesc);
+    if (!m_DepthBuffer) {
+        std::cerr << "Failed to create depth buffer" << std::endl;
+        return false;
+    }
     
     nvrhi::FramebufferInfo fbInfo;
-    fbInfo.addColorFormat(nvrhi::Format::RGBA8_UNORM);
+    fbInfo.addColorFormat(nvrhi::Format::RGBA8_UNORM)
+          .setDepthFormat(nvrhi::Format::D32);
 
     nvrhi::RenderState renderState;
-    renderState.depthStencilState.disableDepthTest();
+    renderState.depthStencilState.enableDepthTest();
     
     nvrhi::GraphicsPipelineDesc pipelineDesc;
     pipelineDesc.setInputLayout(inputLayout)
@@ -163,6 +181,7 @@ void BasicRenderer::Shutdown() {
     m_CommandList = nullptr;
     m_Pipeline = nullptr;
     m_VertexBuffer = nullptr;
+    m_DepthBuffer = nullptr;
     m_PixelShader = nullptr;
     m_VertexShader = nullptr;
     m_DeviceManager = nullptr;
@@ -182,13 +201,15 @@ void BasicRenderer::Render() {
     }
     
     nvrhi::FramebufferDesc fbDesc;
-    fbDesc.addColorAttachment(backBuffer);
+    fbDesc.addColorAttachment(backBuffer)
+          .setDepthAttachment(m_DepthBuffer);
     
     nvrhi::FramebufferHandle framebuffer = device->createFramebuffer(fbDesc);
 
     m_CommandList->open();
     
     nvrhi::utils::ClearColorAttachment(m_CommandList, framebuffer, 0, nvrhi::Color(0.0f, 0.0f, 0.0f, 1.0f));
+    nvrhi::utils::ClearDepthStencilAttachment(m_CommandList, framebuffer, 1.0f, 0);
     
     nvrhi::GraphicsState state;
     state.setPipeline(m_Pipeline)
