@@ -43,15 +43,13 @@ wxWidgets Main Loop
         ↓
     Timer Trigger
         ↓
-GraphicsRenderer::render()
+DeviceManager::BeginFrame()
         ↓
-DeviceManager::beginFrame()
-        ↓
-SceneObject::render() (for each object)
+BasicRenderer::Render()
         ↓
 Command List Submission
         ↓
-DeviceManager::present()
+DeviceManager::Present()
 ```
 
 ### Key Components
@@ -87,7 +85,7 @@ DeviceManager::present()
 ```
 Application Startup → Backend Selection → DeviceManager Creation
 → Window Handle → Swap Chain Setup → BasicRenderer Initialization
-→ Render Loop Start
+→ Render Timer Start
 ```
 
 **Frame Render:**

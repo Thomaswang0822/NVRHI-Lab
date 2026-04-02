@@ -39,7 +39,9 @@ NVRHI-Lab/
 ### Phase 1: NVRHI Foundation (Priority: HIGH)
 **Goal**: Get NVRHI rendering a colored triangle on screen
 
-**Status**: In Progress (D3D12 works, D3D11/Vulkan not implemented, rendering bug exists)
+**Status**: In Progress (D3D12 working, D3D11/Vulkan not implemented)
+
+**Current Version**: 0.1.5
 
 **Tasks:**
 - [x] Create Device Manager (`src/graphics/device_manager`)
@@ -48,7 +50,7 @@ NVRHI-Lab/
 - [x] Create Basic Renderer (`src/graphics/basic_renderer`)
 - [x] Integrate with wxWidgets render loop
 - [x] Refactor to IPlatformContext (RAII-compliant)
-- [ ] Test: Colored triangle renders on D3D12 (visible bug: dark blue background only)
+- [x] Test: Colored triangle renders on D3D12
 - [ ] Implement D3D11 backend
 - [ ] Implement Vulkan backend
 
