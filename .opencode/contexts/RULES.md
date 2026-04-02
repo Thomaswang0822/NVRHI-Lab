@@ -62,6 +62,18 @@ m_Timer.Start(16);      // Auto-stopped on destruction
 - **ComPtr/RefCountPtr** → Auto-release on destruction
 - **Value members** → Lifetime tied to containing object
 
+## Debugging & Logging
+
+### wxWidgets Logging
+```cpp
+#include <wx/log.h>
+
+wxLogError("Failed to create resource");        // Error dialog + log
+wxLogWarning("Something unexpected");            // Warning dialog + log
+wxLogMessage("Debug info: value=%d", value);    // Info log only
+wxLogDebug("Debug: ptr=%p", ptr);               // Debug build only
+```
+
 ## Documentation Philosophy
 
 ### Agent-Facing Context (`.opencode/contexts/`)

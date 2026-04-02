@@ -5,7 +5,6 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
-#include <wx/log.h>
 
 namespace nvrhi_lab {
 
@@ -65,35 +64,31 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
     
     auto vsBytecode = LoadShaderFile("triangle.vs.cso");
     if (vsBytecode.empty()) {
-        wxLogError("BasicRenderer: Failed to load vertex shader");
+        std::cerr << "BasicRenderer: Failed to load vertex shader" << std::endl;
         return false;
     }
-    wxLogMessage(wxString::Format("VS bytes=%llu", (unsigned long long)vsBytecode.size()));
     
     auto psBytecode = LoadShaderFile("triangle.ps.cso");
     if (psBytecode.empty()) {
-        wxLogError("BasicRenderer: Failed to load pixel shader");
+        std::cerr << "BasicRenderer: Failed to load pixel shader" << std::endl;
         return false;
     }
-    wxLogMessage(wxString::Format("PS bytes=%llu", (unsigned long long)psBytecode.size()));
     
     m_VertexShader = device->createShader(
         nvrhi::ShaderDesc().setShaderType(nvrhi::ShaderType::Vertex).setDebugName("TriangleVS"),
         vsBytecode.data(), vsBytecode.size());
     if (!m_VertexShader) {
-        wxLogError("Failed to create vertex shader");
+        std::cerr << "Failed to create vertex shader" << std::endl;
         return false;
     }
-    wxLogMessage(wxString::Format("VertexShader valid=%d", m_VertexShader ? 1 : 0));
     
     m_PixelShader = device->createShader(
         nvrhi::ShaderDesc().setShaderType(nvrhi::ShaderType::Pixel).setDebugName("TrianglePS"),
         psBytecode.data(), psBytecode.size());
     if (!m_PixelShader) {
-        wxLogError("Failed to create pixel shader");
+        std::cerr << "Failed to create pixel shader" << std::endl;
         return false;
     }
-    wxLogMessage(wxString::Format("PixelShader valid=%d", m_PixelShader ? 1 : 0));
     
     nvrhi::VertexAttributeDesc attributes[] = {
         nvrhi::VertexAttributeDesc()
@@ -112,14 +107,9 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
         attributes, uint32_t(std::size(attributes)), m_VertexShader);
     
     if (!inputLayout) {
-        wxLogError("Failed to create input layout");
+        std::cerr << "Failed to create input layout" << std::endl;
         return false;
     }
-    wxLogMessage(wxString::Format("InputLayout valid=%d POSITION_offset=%u COLOR_offset=%u stride=%u",
-                                 inputLayout ? 1 : 0,
-                                 (unsigned)offsetof(Vertex, position),
-                                 (unsigned)offsetof(Vertex, color),
-                                 (unsigned)sizeof(Vertex)));
     
     m_VertexBuffer = device->createBuffer(
         nvrhi::BufferDesc()
@@ -129,22 +119,22 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
             .setDebugName("TriangleVertexBuffer"));
     
     if (!m_VertexBuffer) {
-        wxLogError("Failed to create vertex buffer");
+        std::cerr << "Failed to create vertex buffer" << std::endl;
         return false;
     }
 
-    wxLogMessage(wxString::Format("VertexBuffer valid=%d bytes=%llu",
-                                 m_VertexBuffer ? 1 : 0,
-                                 (unsigned long long)sizeof(g_Vertices)));
-
-    m_vertexBufferBinding.setBuffer(m_VertexBuffer);
+    m_vertexBufferBinding.setBuffer(m_VertexBuffer).setSlot(0).setOffset(0);
     
     nvrhi::FramebufferInfo fbInfo;
-    fbInfo.addColorFormat(nvrhi::Format::RGBA8_UNORM).setDepthFormat(nvrhi::Format::D32);
+    fbInfo.addColorFormat(nvrhi::Format::RGBA8_UNORM);
+
+    nvrhi::RenderState renderState;
+    renderState.depthStencilState.disableDepthTest();
     
     nvrhi::GraphicsPipelineDesc pipelineDesc;
     pipelineDesc.setInputLayout(inputLayout)
                 .setVertexShader(m_VertexShader)
+                .setRenderState(renderState)
                 .setPixelShader(m_PixelShader);
     
     m_Pipeline = device->createGraphicsPipeline(pipelineDesc, fbInfo);
@@ -164,7 +154,6 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
     m_CommandList->writeBuffer(m_VertexBuffer, g_Vertices, sizeof(g_Vertices));
     m_CommandList->close();
     device->executeCommandList(m_CommandList);
-    wxLogMessage("Uploaded vertex buffer and executed command list");
     
     m_Initialized = true;
     return true;
@@ -191,24 +180,15 @@ void BasicRenderer::Render() {
     if (!backBuffer) {
         return;
     }
-
-    wxLogMessage(wxString::Format("Render: backBuffer=%p w=%d h=%d",
-                                 static_cast<void*>(backBuffer),
-                                 m_DeviceManager->GetWidth(),
-                                 m_DeviceManager->GetHeight()));
     
     nvrhi::FramebufferDesc fbDesc;
     fbDesc.addColorAttachment(backBuffer);
     
     nvrhi::FramebufferHandle framebuffer = device->createFramebuffer(fbDesc);
-    wxLogMessage(wxString::Format("Framebuffer valid=%d Pipeline valid=%d CommandList valid=%d",
-                                 framebuffer ? 1 : 0,
-                                 m_Pipeline ? 1 : 0,
-                                 m_CommandList ? 1 : 0));
 
     m_CommandList->open();
     
-    nvrhi::utils::ClearColorAttachment(m_CommandList, framebuffer, 0, nvrhi::Color(0.0f, 0.0f, 1.0f, 1.0f));
+    nvrhi::utils::ClearColorAttachment(m_CommandList, framebuffer, 0, nvrhi::Color(0.0f, 0.0f, 0.0f, 1.0f));
     
     nvrhi::GraphicsState state;
     state.setPipeline(m_Pipeline)
@@ -221,7 +201,6 @@ void BasicRenderer::Render() {
     
     nvrhi::DrawArguments args;
     args.setVertexCount(uint32_t(std::size(g_Vertices)));
-    wxLogMessage(wxString::Format("About to draw vertexCount=%u", uint32_t(std::size(g_Vertices))));
     m_CommandList->draw(args);
     
     m_CommandList->setTextureState(
@@ -231,8 +210,7 @@ void BasicRenderer::Render() {
     m_CommandList->commitBarriers();
     
     m_CommandList->close();
-    auto success = device->executeCommandList(m_CommandList);
-    wxLogMessage(wxString::Format("Command list execution %s", success ? "succeeded" : "failed"));
+    device->executeCommandList(m_CommandList);
 }
 
 } // namespace nvrhi_lab
