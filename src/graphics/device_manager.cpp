@@ -1,5 +1,6 @@
 #include "device_manager.h"
 
+#include "platform/d3d11_context.h"
 #include "platform/d3d12_context.h"
 
 #include <iostream>
@@ -65,6 +66,8 @@ bool DeviceManager::Initialize(const DeviceManagerDesc& desc, void* windowHandle
             m_Platform = std::make_unique<D3D12Context>();
             break;
         case GraphicsBackend::D3D11:
+            m_Platform = std::make_unique<D3D11Context>();
+            break;
         case GraphicsBackend::Vulkan:
             std::cerr << "Backend not implemented: " << static_cast<int>(m_Desc.backend) << std::endl;
             return false;

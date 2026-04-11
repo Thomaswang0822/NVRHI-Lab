@@ -21,8 +21,17 @@ static const Vertex g_Vertices[] = {
     { { -0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
 };
 
-std::vector<uint8_t> LoadShaderFile(const std::string& filename) {
-    std::string shaderPath = "shaders/" + filename;
+std::string GetShaderSubdirectory(GraphicsBackend backend) {
+    switch (backend) {
+        case GraphicsBackend::D3D11: return "shaders/d3d11/";
+        case GraphicsBackend::D3D12: return "shaders/d3d12/";
+        case GraphicsBackend::Vulkan: return "shaders/vulkan/";
+        default: return "shaders/";
+    }
+}
+
+std::vector<uint8_t> LoadShaderFile(const std::string& filename, GraphicsBackend backend) {
+    std::string shaderPath = GetShaderSubdirectory(backend) + filename;
     std::ifstream file(shaderPath, std::ios::binary | std::ios::ate);
     
     if (!file.is_open()) {
@@ -61,14 +70,15 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
     m_DeviceManager = deviceManager;
     
     nvrhi::IDevice* device = m_DeviceManager->GetDevice();
+    GraphicsBackend backend = m_DeviceManager->GetBackend();
     
-    auto vsBytecode = LoadShaderFile("triangle.vs.cso");
+    auto vsBytecode = LoadShaderFile("triangle.vs.cso", backend);
     if (vsBytecode.empty()) {
         std::cerr << "BasicRenderer: Failed to load vertex shader" << std::endl;
         return false;
     }
     
-    auto psBytecode = LoadShaderFile("triangle.ps.cso");
+    auto psBytecode = LoadShaderFile("triangle.ps.cso", backend);
     if (psBytecode.empty()) {
         std::cerr << "BasicRenderer: Failed to load pixel shader" << std::endl;
         return false;
@@ -135,6 +145,7 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
         .setUseClearValue(true)
         .setDebugName("DepthBuffer")
         .enableAutomaticStateTracking(nvrhi::ResourceStates::DepthWrite);
+    depthDesc.isShaderResource = false;
     
     m_DepthBuffer = device->createTexture(depthDesc);
     if (!m_DepthBuffer) {
