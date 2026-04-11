@@ -1,8 +1,9 @@
 #include "d3d12_context.h"
 
+#include "../../utils/logging.h"
+
 #include <nvrhi/validation.h>
 #include <d3d12sdklayers.h>
-#include <iostream>
 
 using Microsoft::WRL::ComPtr;
 
@@ -29,7 +30,7 @@ nvrhi::DeviceHandle D3D12Context::createNvrhiDevice(nvrhi::IMessageCallback* mes
     ComPtr<IDXGIFactory6> factory;
     HRESULT hr = CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory));
     if (FAILED(hr)) {
-        std::cerr << "D3D12: Failed to create DXGI factory" << std::endl;
+        LogError("D3D12: Failed to create DXGI factory");
         return nullptr;
     }
     m_Factory = factory;
@@ -47,7 +48,7 @@ nvrhi::DeviceHandle D3D12Context::createNvrhiDevice(nvrhi::IMessageCallback* mes
         }
     }
     if (!m_Device) {
-        std::cerr << "D3D12: Failed to create device" << std::endl;
+        LogError("D3D12: Failed to create device");
         return nullptr;
     }
 
@@ -56,19 +57,19 @@ nvrhi::DeviceHandle D3D12Context::createNvrhiDevice(nvrhi::IMessageCallback* mes
     queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     hr = m_Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_CommandQueue));
     if (FAILED(hr)) {
-        std::cerr << "D3D12: Failed to create command queue" << std::endl;
+        LogError("D3D12: Failed to create command queue");
         return nullptr;
     }
 
     hr = m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence));
     if (FAILED(hr)) {
-        std::cerr << "D3D12: Failed to create fence" << std::endl;
+        LogError("D3D12: Failed to create fence");
         return nullptr;
     }
 
     m_FenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
     if (!m_FenceEvent) {
-        std::cerr << "D3D12: Failed to create fence event" << std::endl;
+        LogError("D3D12: Failed to create fence event");
         return nullptr;
     }
 
@@ -79,7 +80,7 @@ nvrhi::DeviceHandle D3D12Context::createNvrhiDevice(nvrhi::IMessageCallback* mes
 
     m_NvrhiDevice = nvrhi::d3d12::createDevice(nvrhiDesc);
     if (!m_NvrhiDevice) {
-        std::cerr << "D3D12: Failed to create NVRHI device" << std::endl;
+        LogError("D3D12: Failed to create NVRHI device");
         return nullptr;
     }
 
@@ -92,7 +93,7 @@ nvrhi::DeviceHandle D3D12Context::createNvrhiDevice(nvrhi::IMessageCallback* mes
 
 void D3D12Context::createSwapChain(void* windowHandle, int width, int height, int backBufferCount) {
     if (!m_Factory || !m_CommandQueue) {
-        std::cerr << "D3D12: Cannot create swap chain before device" << std::endl;
+        LogError("D3D12: Cannot create swap chain before device");
         return;
     }
 
@@ -106,7 +107,7 @@ void D3D12Context::createSwapChain(void* windowHandle, int width, int height, in
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.BufferCount = static_cast<UINT>(backBufferCount);
     swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
     swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
@@ -120,13 +121,13 @@ void D3D12Context::createSwapChain(void* windowHandle, int width, int height, in
         &swapChain1
     );
     if (FAILED(hr)) {
-        std::cerr << "D3D12: Failed to create swap chain" << std::endl;
+        LogError("D3D12: Failed to create swap chain");
         return;
     }
 
     hr = swapChain1.As(&m_SwapChain);
     if (FAILED(hr)) {
-        std::cerr << "D3D12: Failed to get swap chain4" << std::endl;
+        LogError("D3D12: Failed to get swap chain4");
         return;
     }
 
@@ -139,7 +140,7 @@ void D3D12Context::createSwapChain(void* windowHandle, int width, int height, in
         ComPtr<ID3D12Resource> backBuffer;
         hr = m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer));
         if (FAILED(hr)) {
-            std::cerr << "D3D12: Failed to get back buffer " << i << std::endl;
+            LogError("D3D12: Failed to get back buffer " + std::to_string(i));
             continue;
         }
 

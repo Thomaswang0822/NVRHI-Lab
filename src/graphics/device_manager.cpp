@@ -2,8 +2,7 @@
 
 #include "platform/d3d11_context.h"
 #include "platform/d3d12_context.h"
-
-#include <iostream>
+#include "../utils/logging.h"
 
 namespace nvrhi_lab {
 
@@ -14,13 +13,13 @@ public:
     void message(nvrhi::MessageSeverity severity, const char* messageText) override {
         switch (severity) {
             case nvrhi::MessageSeverity::Error:
-                std::cerr << "[NVRHI Error] " << messageText << std::endl;
+                LogError(messageText);
                 break;
             case nvrhi::MessageSeverity::Warning:
-                std::cerr << "[NVRHI Warning] " << messageText << std::endl;
+                LogWarning(messageText);
                 break;
             case nvrhi::MessageSeverity::Info:
-                std::cout << "[NVRHI Info] " << messageText << std::endl;
+                LogInfo(messageText);
                 break;
         }
     }
@@ -69,13 +68,13 @@ bool DeviceManager::Initialize(const DeviceManagerDesc& desc, void* windowHandle
             m_Platform = std::make_unique<D3D11Context>();
             break;
         case GraphicsBackend::Vulkan:
-            std::cerr << "Backend not implemented: " << static_cast<int>(m_Desc.backend) << std::endl;
+            LogError("Backend not implemented: " + std::to_string(static_cast<int>(m_Desc.backend)));
             return false;
     }
 
     m_Device = m_Platform->createNvrhiDevice(&g_MessageCallback, m_Desc.enableValidation);
     if (!m_Device) {
-        std::cerr << "Failed to create NVRHI device" << std::endl;
+        LogError("Failed to create NVRHI device");
         m_Platform.reset();
         return false;
     }

@@ -1,10 +1,10 @@
 #include "basic_renderer.h"
 #include "device_manager.h"
+#include "../utils/logging.h"
 
 #include <nvrhi/utils.h>
 #include <fstream>
 #include <vector>
-#include <iostream>
 
 namespace nvrhi_lab {
 
@@ -35,7 +35,7 @@ std::vector<uint8_t> LoadShaderFile(const std::string& filename, GraphicsBackend
     std::ifstream file(shaderPath, std::ios::binary | std::ios::ate);
     
     if (!file.is_open()) {
-        std::cerr << "Failed to open shader file: " << shaderPath << std::endl;
+        LogError("Failed to open shader file: " + shaderPath);
         return {};
     }
     
@@ -63,7 +63,7 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
     }
     
     if (!deviceManager || !deviceManager->IsInitialized()) {
-        std::cerr << "BasicRenderer: DeviceManager is null or not initialized" << std::endl;
+        LogError("BasicRenderer: DeviceManager is null or not initialized");
         return false;
     }
     
@@ -74,13 +74,13 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
     
     auto vsBytecode = LoadShaderFile("triangle.vs.cso", backend);
     if (vsBytecode.empty()) {
-        std::cerr << "BasicRenderer: Failed to load vertex shader" << std::endl;
+        LogError("BasicRenderer: Failed to load vertex shader");
         return false;
     }
     
     auto psBytecode = LoadShaderFile("triangle.ps.cso", backend);
     if (psBytecode.empty()) {
-        std::cerr << "BasicRenderer: Failed to load pixel shader" << std::endl;
+        LogError("BasicRenderer: Failed to load pixel shader");
         return false;
     }
     
@@ -88,7 +88,7 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
         nvrhi::ShaderDesc().setShaderType(nvrhi::ShaderType::Vertex).setDebugName("TriangleVS"),
         vsBytecode.data(), vsBytecode.size());
     if (!m_VertexShader) {
-        std::cerr << "Failed to create vertex shader" << std::endl;
+        LogError("Failed to create vertex shader");
         return false;
     }
     
@@ -96,7 +96,7 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
         nvrhi::ShaderDesc().setShaderType(nvrhi::ShaderType::Pixel).setDebugName("TrianglePS"),
         psBytecode.data(), psBytecode.size());
     if (!m_PixelShader) {
-        std::cerr << "Failed to create pixel shader" << std::endl;
+        LogError("Failed to create pixel shader");
         return false;
     }
     
@@ -117,7 +117,7 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
         attributes, uint32_t(std::size(attributes)), m_VertexShader);
     
     if (!inputLayout) {
-        std::cerr << "Failed to create input layout" << std::endl;
+        LogError("Failed to create input layout");
         return false;
     }
     
@@ -129,7 +129,7 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
             .setDebugName("TriangleVertexBuffer"));
     
     if (!m_VertexBuffer) {
-        std::cerr << "Failed to create vertex buffer" << std::endl;
+        LogError("Failed to create vertex buffer");
         return false;
     }
 
@@ -145,11 +145,11 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
         .setUseClearValue(true)
         .setDebugName("DepthBuffer")
         .enableAutomaticStateTracking(nvrhi::ResourceStates::DepthWrite);
-    depthDesc.isShaderResource = false;
+    depthDesc.isShaderResource = false;  // Depth buffer is for depth testing only, not sampled in shaders
     
     m_DepthBuffer = device->createTexture(depthDesc);
     if (!m_DepthBuffer) {
-        std::cerr << "Failed to create depth buffer" << std::endl;
+        LogError("Failed to create depth buffer");
         return false;
     }
     
@@ -169,13 +169,13 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
     m_Pipeline = device->createGraphicsPipeline(pipelineDesc, fbInfo);
     
     if (!m_Pipeline) {
-        std::cerr << "Failed to create graphics pipeline" << std::endl;
+        LogError("Failed to create graphics pipeline");
         return false;
     }
     
     m_CommandList = device->createCommandList();
     if (!m_CommandList) {
-        std::cerr << "Failed to create command list" << std::endl;
+        LogError("Failed to create command list");
         return false;
     }
     

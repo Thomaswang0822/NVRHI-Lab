@@ -5,25 +5,51 @@
 #include <wx/msgdlg.h>
 
 bool MyApp::OnInit() {
-    // Create the main window
+    nvrhi_lab::GraphicsBackend selectedBackend = nvrhi_lab::GraphicsBackend::D3D12;
+    
+    for (int i = 1; i < argc; ++i) {
+        wxString arg = argv[i];
+        if (arg.StartsWith("--backend=")) {
+            wxString value = arg.AfterFirst('=').Lower();
+            if (value == "d3d11") {
+                selectedBackend = nvrhi_lab::GraphicsBackend::D3D11;
+            } else if (value == "d3d12") {
+                selectedBackend = nvrhi_lab::GraphicsBackend::D3D12;
+            } else if (value == "vulkan") {
+                selectedBackend = nvrhi_lab::GraphicsBackend::Vulkan;
+            }
+        } else if (arg == "--help" || arg == "-h") {
+            wxMessageBox("Usage: NVRHI-Lab.exe [options]\n\n"
+                        "Options:\n"
+                        "  --backend=d3d11   Use Direct3D 11 backend\n"
+                        "  --backend=d3d12   Use Direct3D 12 backend (default)\n"
+                        "  --backend=vulkan  Use Vulkan backend (not implemented)\n"
+                        "  --help, -h        Show this help message",
+                        "Command Line Options", wxOK | wxICON_INFORMATION);
+            return false;
+        }
+    }
+    
     MyFrame* frame = new MyFrame();
     frame->Show(true);
     
-    // Create and initialize the device manager
     m_DeviceManager = std::make_unique<nvrhi_lab::DeviceManager>();
     
     nvrhi_lab::DeviceManagerDesc desc;
-    desc.backend = nvrhi_lab::GraphicsBackend::D3D12;  // Try D3D12 first
+    desc.backend = selectedBackend;
     desc.enableValidation = true;
     desc.enableDebugLayer = true;
     
-    // Get the window handle
     void* windowHandle = reinterpret_cast<void*>(frame->GetHandle());
     
     if (!m_DeviceManager->Initialize(desc, windowHandle)) {
-        // Try D3D11 as fallback
-        desc.backend = nvrhi_lab::GraphicsBackend::D3D11;
-        if (!m_DeviceManager->Initialize(desc, windowHandle)) {
+        if (selectedBackend == nvrhi_lab::GraphicsBackend::D3D12) {
+            desc.backend = nvrhi_lab::GraphicsBackend::D3D11;
+            if (!m_DeviceManager->Initialize(desc, windowHandle)) {
+                wxMessageBox("Failed to initialize graphics device!", "Error", wxOK | wxICON_ERROR);
+                return false;
+            }
+        } else {
             wxMessageBox("Failed to initialize graphics device!", "Error", wxOK | wxICON_ERROR);
             return false;
         }
