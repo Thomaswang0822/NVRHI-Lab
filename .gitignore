@@ -24,4 +24,4 @@ bin/
 lib/
 
 # .vscode
-.agents
+.agents/contexts

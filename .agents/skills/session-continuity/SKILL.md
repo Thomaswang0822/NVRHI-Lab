@@ -24,7 +24,7 @@ Write to context files when:
 - User explicitly requests with prompts like "write to our continuity log", "update context", "note this decision", or similar
 - User forgets to instruct but confirms when asked "Should I update the context files with this decision?"
 
-Write context files only for information that affects how the AI agent should behave or what decisions must be respected in future work. Refer to `.opencode/CONTEXT_PHILOSOPHY.md` for guidance on what to include vs. exclude.
+Write context files only for information that affects how the AI agent should behave or what decisions must be respected in future work. Refer to `.agents/contexts/RULES.md` for guidance on what to include vs. exclude.
 
 ## How to Use
 
@@ -36,7 +36,7 @@ Run the bundled script to review all context files:
 scripts/review-context.sh
 ```
 
-The script reads all `.md` files from `.opencode/contexts/` directory, providing comprehensive project context including:
+The script reads all `.md` files from `.agents/contexts/` directory, providing comprehensive project context including:
 
 - Project design and philosophy
 - Choices made (backends, C++ standard, etc.)
@@ -44,7 +44,7 @@ The script reads all `.md` files from `.opencode/contexts/` directory, providing
 - Rules and conventions
 - Technical stack
 
-Alternatively, manually read the context files from `.opencode/contexts/` directory.
+Alternatively, manually read the context files from `.agents/contexts/` directory.
 
 ### Writing Context
 
