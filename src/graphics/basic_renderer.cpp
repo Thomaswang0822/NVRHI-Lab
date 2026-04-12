@@ -30,6 +30,18 @@ std::string GetShaderSubdirectory(GraphicsBackend backend) {
     }
 }
 
+std::string GetShaderExtension(GraphicsBackend backend) {
+    switch (backend) {
+        case GraphicsBackend::D3D11:
+        case GraphicsBackend::D3D12:
+            return ".cso";
+        case GraphicsBackend::Vulkan:
+            return ".spv";
+        default:
+            return ".cso";
+    }
+}
+
 std::vector<uint8_t> LoadShaderFile(const std::string& filename, GraphicsBackend backend) {
     std::string shaderPath = GetShaderSubdirectory(backend) + filename;
     std::ifstream file(shaderPath, std::ios::binary | std::ios::ate);
@@ -72,13 +84,15 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
     nvrhi::IDevice* device = m_DeviceManager->GetDevice();
     GraphicsBackend backend = m_DeviceManager->GetBackend();
     
-    auto vsBytecode = LoadShaderFile("triangle.vs.cso", backend);
+    std::string shaderExt = GetShaderExtension(backend);
+    
+    auto vsBytecode = LoadShaderFile("triangle.vs" + shaderExt, backend);
     if (vsBytecode.empty()) {
         LogError("BasicRenderer: Failed to load vertex shader");
         return false;
     }
     
-    auto psBytecode = LoadShaderFile("triangle.ps.cso", backend);
+    auto psBytecode = LoadShaderFile("triangle.ps" + shaderExt, backend);
     if (psBytecode.empty()) {
         LogError("BasicRenderer: Failed to load pixel shader");
         return false;
@@ -154,7 +168,7 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
     }
     
     nvrhi::FramebufferInfo fbInfo;
-    fbInfo.addColorFormat(nvrhi::Format::RGBA8_UNORM)
+    fbInfo.addColorFormat(m_DeviceManager->GetSwapChainFormat())
           .setDepthFormat(nvrhi::Format::D32);
 
     nvrhi::RenderState renderState;

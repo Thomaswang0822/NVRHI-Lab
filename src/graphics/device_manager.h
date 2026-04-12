@@ -45,6 +45,7 @@ public:
     uint32_t GetHeight() const { return m_Desc.height; }
     GraphicsBackend GetBackend() const { return m_Desc.backend; }
     const char* GetBackendName() const;
+    nvrhi::Format GetSwapChainFormat() const;
     bool IsInitialized() const { return m_Initialized; }
 
 private:

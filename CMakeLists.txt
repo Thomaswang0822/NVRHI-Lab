@@ -10,6 +10,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
+add_compile_definitions(NOMINMAX)
+
 set(wxBUILD_SHARED OFF)
 add_subdirectory(thirdparty/wxWidgets)
 
@@ -18,6 +20,8 @@ set(NVRHI_WITH_DX12 ON)
 set(NVRHI_WITH_VULKAN ON)
 set(NVRHI_WITH_VALIDATION ON)
 add_subdirectory(thirdparty/NVRHI)
+
+find_package(Vulkan REQUIRED)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 
@@ -35,8 +39,8 @@ else()
 endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    wx::core wx::base # wxWidgets
-    nvrhi nvrhi_d3d11 nvrhi_d3d12 nvrhi_vk
+    wx::core wx::base
+    nvrhi nvrhi_d3d11 nvrhi_d3d12 nvrhi_vk Vulkan-Headers Vulkan::Vulkan
 )
 
 if(WIN32)

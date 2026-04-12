@@ -18,9 +18,16 @@ public:
 
     virtual void waitForIdle() = 0;
 
-    virtual int getWidth() const = 0;
-    virtual int getHeight() const = 0;
+    int getWidth() const { return m_Width; }
+    int getHeight() const { return m_Height; }
     virtual const char* getBackendName() const = 0;
+
+    nvrhi::Format getSwapChainFormat() const { return m_SwapChainFormat; }
+
+protected:
+    int m_Width = 0;
+    int m_Height = 0;
+    nvrhi::Format m_SwapChainFormat = nvrhi::Format::RGBA8_UNORM;
 };
 
 } // namespace nvrhi_lab

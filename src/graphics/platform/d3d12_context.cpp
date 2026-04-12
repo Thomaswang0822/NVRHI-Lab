@@ -147,7 +147,7 @@ void D3D12Context::createSwapChain(void* windowHandle, int width, int height, in
         nvrhi::TextureDesc texDesc;
         texDesc.width = static_cast<uint32_t>(width);
         texDesc.height = static_cast<uint32_t>(height);
-        texDesc.format = nvrhi::Format::RGBA8_UNORM;
+        texDesc.format = m_SwapChainFormat;
         texDesc.isRenderTarget = true;
         texDesc.initialState = nvrhi::ResourceStates::Present;
         texDesc.debugName = "BackBuffer_" + std::to_string(i);

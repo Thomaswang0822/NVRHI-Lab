@@ -3,22 +3,20 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-#include <dxgi1_6.h>
-#include <d3d12.h>
-#include <wrl/client.h>
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
+#include <vulkan/vulkan.hpp>
+#include <nvrhi/vulkan.h>
 
-#include <nvrhi/d3d12.h>
+#include <vector>
 
 #include "platform_context.h"
 
 namespace nvrhi_lab {
 
-using Microsoft::WRL::ComPtr;
-
-class D3D12Context : public IPlatformContext {
+class VulkanContext : public IPlatformContext {
 public:
-    D3D12Context();
-    ~D3D12Context();
+    VulkanContext();
+    ~VulkanContext();
 
     nvrhi::DeviceHandle createNvrhiDevice(nvrhi::IMessageCallback* messageCallback, bool enableValidation) override;
 
@@ -29,18 +27,22 @@ public:
 
     void waitForIdle() override;
 
-    const char* getBackendName() const override { return "D3D12"; }
+    const char* getBackendName() const override { return "Vulkan"; }
 
 private:
     int m_BackBufferCount = 0;
 
-    ComPtr<IDXGIFactory6> m_Factory;
-    ComPtr<ID3D12Device> m_Device;
-    ComPtr<ID3D12CommandQueue> m_CommandQueue;
-    ComPtr<IDXGISwapChain4> m_SwapChain;
-    ComPtr<ID3D12Fence> m_Fence;
-    HANDLE m_FenceEvent = nullptr;
-    uint64_t m_FenceValue = 0;
+    vk::Instance m_Instance;
+    vk::PhysicalDevice m_PhysicalDevice;
+    vk::Device m_Device;
+    vk::Queue m_GraphicsQueue;
+    int m_GraphicsQueueFamilyIndex = 0;
+    vk::SurfaceKHR m_Surface;
+    vk::SwapchainKHR m_SwapChain;
+    vk::Semaphore m_ImageAvailableSemaphore;
+    vk::Semaphore m_RenderFinishedSemaphore;
+    vk::Fence m_InFlightFence;
+    uint32_t m_CurrentImageIndex = 0;
 
     nvrhi::DeviceHandle m_NvrhiDevice;
     std::vector<nvrhi::TextureHandle> m_SwapChainBuffers;

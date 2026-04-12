@@ -29,13 +29,9 @@ public:
 
     void waitForIdle() override;
 
-    int getWidth() const override { return m_Width; }
-    int getHeight() const override { return m_Height; }
     const char* getBackendName() const override { return "D3D11"; }
 
 private:
-    int m_Width = 0;
-    int m_Height = 0;
     int m_BackBufferCount = 0;
 
     ComPtr<IDXGIFactory6> m_Factory;

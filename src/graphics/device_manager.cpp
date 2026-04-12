@@ -2,6 +2,7 @@
 
 #include "platform/d3d11_context.h"
 #include "platform/d3d12_context.h"
+#include "platform/vulkan_context.h"
 #include "../utils/logging.h"
 
 namespace nvrhi_lab {
@@ -68,8 +69,8 @@ bool DeviceManager::Initialize(const DeviceManagerDesc& desc, void* windowHandle
             m_Platform = std::make_unique<D3D11Context>();
             break;
         case GraphicsBackend::Vulkan:
-            LogError("Backend not implemented: " + std::to_string(static_cast<int>(m_Desc.backend)));
-            return false;
+            m_Platform = std::make_unique<VulkanContext>();
+            break;
     }
 
     m_Device = m_Platform->createNvrhiDevice(&g_MessageCallback, m_Desc.enableValidation);
@@ -147,6 +148,13 @@ const char* DeviceManager::GetBackendName() const {
         return "None";
     }
     return m_Platform->getBackendName();
+}
+
+nvrhi::Format DeviceManager::GetSwapChainFormat() const {
+    if (!m_Platform) {
+        return nvrhi::Format::RGBA8_UNORM;
+    }
+    return m_Platform->getSwapChainFormat();
 }
 
 } // namespace nvrhi_lab
