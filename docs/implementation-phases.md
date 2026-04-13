@@ -2,11 +2,11 @@
 
 This document outlines the incremental implementation path from a minimal triangle to a fully interactive graphics testbed.
 
-**Current Status**: Phase 1 in progress (v0.1.5). D3D12 backend working with visible triangle; D3D11/Vulkan backends not yet implemented.
+**Current Status**: Phase 1 complete (v0.1.6). All three backends (D3D11, D3D12, Vulkan) working with visible triangle.
 
 ---
 
-## Phase 1: NVRHI Foundation
+## Phase 1: NVRHI Foundation ✅ COMPLETE
 
 **Goal**: Get NVRHI rendering a colored triangle on screen
 
@@ -31,7 +31,7 @@ This document outlines the incremental implementation path from a minimal triang
    - Render a colored triangle
    - Verify each backend works (DX11/DX12/Vulkan)
 
-**Success Criteria**: Colored triangle renders on screen with each backend
+**Success Criteria**: ✅ Colored triangle renders on screen with each backend (D3D11, D3D12, Vulkan)
 
 **NVRHI Concepts Learned**:
 - Device creation (D3D11, D3D12, Vulkan)

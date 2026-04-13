@@ -10,10 +10,11 @@ NVRHI-Lab/
 │   │   ├── my_app.h/cpp     - Main application and window frame
 │   │   └── ...
 │   ├── graphics/             - NVRHI integration layer
-│   │   ├── platform/          - Platform abstraction (D3D12Context, etc.)
-│   │   │   ├── platform_context.h - Interface
+│   │   ├── platform/          - Platform abstraction (D3D11, D3D12, Vulkan)
+│   │   │   ├── platform_context.h - Base class with common functionality
+│   │   │   ├── d3d11_context.h/cpp - D3D11 implementation
 │   │   │   ├── d3d12_context.h/cpp - D3D12 implementation
-│   │   │   └── ...                 - Future: D3D11, Vulkan
+│   │   │   └── vulkan_context.h/cpp - Vulkan implementation
 │   │   ├── device_manager.h/cpp - Pure NVRHI device management
 │   │   ├── basic_renderer.h/cpp - Triangle rendering for Phase 1
 │   │   ├── scene_object.h/cpp     - Base class for renderable objects
@@ -55,8 +56,9 @@ DeviceManager::Present()
 ### Key Components
 
 **IPlatformContext**
-- Interface for platform-specific device creation
-- Implementations: D3D12Context (raw D3D12/DXGI), future: D3D11Context, VulkanContext
+- Base class for platform-specific device creation with common functionality
+- Implementations: D3D11Context, D3D12Context, VulkanContext
+- Provides shared members: width, height, swap chain format
 - Isolates all raw backend API calls
 
 **DeviceManager**
@@ -102,5 +104,14 @@ Graphics code uses pure NVRHI API - backend-specific differences isolated:
 - **Resources**: Same NVRHI API for all backends (textures, buffers, etc.)
 - **Commands**: `nvrhi::CommandList` interface is backend-agnostic
 - **Platform isolation**: `platform/` folder contains backend implementations
+- **Swap chain format**: Standardized to RGBA8_UNORM across all backends
 
 Backend switching only requires app restart - no code changes needed.
+
+## Current Backend Support
+
+| Backend | Status | Notes |
+|---------|--------|-------|
+| D3D11 | ✅ Working | Uses DXGI swap chain |
+| D3D12 | ✅ Working | Uses DXGI swap chain with explicit synchronization |
+| Vulkan | ✅ Working | Requires Vulkan 1.3 (timelineSemaphore, dynamicRendering) |

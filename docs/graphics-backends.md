@@ -567,5 +567,5 @@ The good news: NVRHI already has a Vulkan backend (`nvrhi_vk`), so you mainly ne
 
 ## Further Reading
 
-- [NVRHI Guide](nvhrri-guide.md) - How to use NVRHI's unified API
+- [NVRHI Guide](nvrhi-guide.md) - How to use NVRHI's unified API
 - [Architecture](architecture.md) - Project structure and component interactions

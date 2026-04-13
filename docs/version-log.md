@@ -57,3 +57,17 @@ Phase 1: wxWidgets Render Loop Integration
 - Frame timing and presentation working
 - Fixed rendering bug: Added depth buffer attachment for proper depth testing
 - **Colored triangle now visible on D3D12 backend**
+
+## 0.1.6
+
+Phase 1 Complete: Vulkan Backend Implementation
+
+- Implemented VulkanContext class with full Vulkan device/swap chain management
+- Added two-phase Vulkan dispatcher initialization for Vulkan-Hpp dynamic dispatch
+- Enabled Vulkan 1.3 features (timelineSemaphore, dynamicRendering, synchronization2)
+- Refactored IPlatformContext from pure interface to concrete base class with protected members
+- Standardized swap chain format to RGBA8_UNORM across all backends
+- Added GetSwapChainFormat() for consistent format access in renderer
+- Fixed resource state tracking with keepInitialState flag for back buffers
+- Added graphics-backends.md documentation comparing D3D11/D3D12/Vulkan APIs
+- **All three backends (D3D11, D3D12, Vulkan) now working - Phase 1 complete!**
