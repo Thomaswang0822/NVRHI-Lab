@@ -2,7 +2,11 @@
 
 This document outlines the incremental implementation path from a minimal triangle to a fully interactive graphics testbed.
 
-## Phase 1: NVRHI Foundation
+**Current Status**: Phase 1 complete (v0.1.6). All three backends (D3D11, D3D12, Vulkan) working with visible triangle.
+
+---
+
+## Phase 1: NVRHI Foundation ✅ COMPLETE
 
 **Goal**: Get NVRHI rendering a colored triangle on screen
 
@@ -11,8 +15,9 @@ This document outlines the incremental implementation path from a minimal triang
    - Initialize NVRHI device for DX11/DX12/Vulkan
    - Create swap chain texture wrapper
    - Set up framebuffer
+   - Uses IPlatformContext interface for backend abstraction
 
-2. Create Basic Renderer (`src/graphics/graphics_renderer.h/cpp`)
+2. Create Basic Renderer (`src/graphics/basic_renderer.h/cpp`)
    - Simple graphics pipeline (vertex + pixel shaders)
    - Command list recording and execution
    - Present to screen
@@ -23,18 +28,18 @@ This document outlines the incremental implementation path from a minimal triang
    - Render loop triggered by wxWidgets timer
 
 4. Test across backends
-   - Render a red triangle
+   - Render a colored triangle
    - Verify each backend works (DX11/DX12/Vulkan)
 
-**Success Criteria**: Colored triangle renders on screen with each backend
+**Success Criteria**: ✅ Colored triangle renders on screen with each backend (D3D11, D3D12, Vulkan)
 
 **NVRHI Concepts Learned**:
-- Device creation (d3d11, d3d12, vulkan)
-- Swap chain texture wrapper
-- Framebuffer setup
+- Device creation (D3D11, D3D12, Vulkan)
+- Swap chain and backbuffer management
 - Graphics pipeline state objects
-- Command list recording
-- Presenting
+- Command list recording and submission
+- Resource state transitions (barriers)
+- Frame synchronization
 
 ---
 

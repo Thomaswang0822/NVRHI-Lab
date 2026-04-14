@@ -10,8 +10,13 @@ NVRHI-Lab/
 │   │   ├── my_app.h/cpp     - Main application and window frame
 │   │   └── ...
 │   ├── graphics/             - NVRHI integration layer
-│   │   ├── device_manager.h/cpp   - NVRHI device and swap chain management
-│   │   ├── graphics_renderer.h/cpp - Main rendering pipeline
+│   │   ├── platform/          - Platform abstraction (D3D11, D3D12, Vulkan)
+│   │   │   ├── platform_context.h - Base class with common functionality
+│   │   │   ├── d3d11_context.h/cpp - D3D11 implementation
+│   │   │   ├── d3d12_context.h/cpp - D3D12 implementation
+│   │   │   └── vulkan_context.h/cpp - Vulkan implementation
+│   │   ├── device_manager.h/cpp - Pure NVRHI device management
+│   │   ├── basic_renderer.h/cpp - Triangle rendering for Phase 1
 │   │   ├── scene_object.h/cpp     - Base class for renderable objects
 │   │   ├── target.h/cpp           - Interactive target objects
 │   │   ├── background_wall.h/cpp   - Background geometry
@@ -39,30 +44,32 @@ wxWidgets Main Loop
         ↓
     Timer Trigger
         ↓
-GraphicsRenderer::render()
+DeviceManager::BeginFrame()
         ↓
-DeviceManager::beginFrame()
-        ↓
-SceneObject::render() (for each object)
+BasicRenderer::Render()
         ↓
 Command List Submission
         ↓
-DeviceManager::present()
+DeviceManager::Present()
 ```
 
 ### Key Components
 
-**DeviceManager**
-- Wraps NVRHI device creation for DX11/DX12/Vulkan
-- Manages swap chain textures and framebuffers
-- Handles frame synchronization (begin/end frame)
-- Backend selection on startup
+**IPlatformContext**
+- Base class for platform-specific device creation with common functionality
+- Implementations: D3D11Context, D3D12Context, VulkanContext
+- Provides shared members: width, height, swap chain format
+- Isolates all raw backend API calls
 
-**GraphicsRenderer**
-- Owns graphics pipeline state objects
+**DeviceManager**
+- Uses IPlatformContext to create NVRHI device
+- Pure NVRHI API after initialization - no raw D3D12/D3D11/Vulkan pointers
+- Manages frame timing and presentation
+
+**BasicRenderer**
+- Renders triangle for Phase 1 testing
+- Owns pipeline state, shaders, vertex buffer
 - Records command lists
-- Manages shader compilation
-- Coordinates scene rendering
 
 **SceneObject (Base Class)**
 - Owns resources (buffers, textures, pipeline states)
@@ -79,29 +86,32 @@ DeviceManager::present()
 **Initialization:**
 ```
 Application Startup → Backend Selection → DeviceManager Creation
-→ Window Handle → Swap Chain Setup → GraphicsRenderer Initialization
-→ Scene Objects Creation → Render Loop Start
+→ Window Handle → Swap Chain Setup → BasicRenderer Initialization
+→ Render Timer Start
 ```
 
 **Frame Render:**
 ```
-Timer Tick → beginFrame() → Clear Render Target
-→ foreach SceneObject: render() → endFrame() → present()
-```
-
-**Resource Management:**
-```
-SceneObject owns buffers/textures → DeviceManager tracks resource lifetime
-→ NVRHI automatic resource destruction → No manual cleanup needed
+Timer Tick → BeginFrame() → BasicRenderer::Render()
+→ Command List Submission → Present()
 ```
 
 ## Backend Abstraction
 
-All graphics code uses NVRHI API - backend-specific differences are abstracted:
+Graphics code uses pure NVRHI API - backend-specific differences isolated:
 
-- **Device creation**: `nvrhi::d3d11::createDevice()`, `nvrhi::d3d12::createDevice()`, `nvrhi::vulkan::createDevice()`
-- **Resources**: Same API for all backends (textures, buffers, etc.)
+- **Device creation**: IPlatformContext implementations create raw objects, return NVRHI device
+- **Resources**: Same NVRHI API for all backends (textures, buffers, etc.)
 - **Commands**: `nvrhi::CommandList` interface is backend-agnostic
-- **Pipelines**: Same pipeline state objects across backends
+- **Platform isolation**: `platform/` folder contains backend implementations
+- **Swap chain format**: Standardized to RGBA8_UNORM across all backends
 
 Backend switching only requires app restart - no code changes needed.
+
+## Current Backend Support
+
+| Backend | Status | Notes |
+|---------|--------|-------|
+| D3D11 | ✅ Working | Uses DXGI swap chain |
+| D3D12 | ✅ Working | Uses DXGI swap chain with explicit synchronization |
+| Vulkan | ✅ Working | Requires Vulkan 1.3 (timelineSemaphore, dynamicRendering) |
