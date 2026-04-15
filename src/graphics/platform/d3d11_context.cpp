@@ -132,6 +132,7 @@ void D3D11Context::createSwapChain(void* windowHandle, int width, int height, in
         texDesc.format = m_SwapChainFormat;
         texDesc.isRenderTarget = true;
         texDesc.initialState = nvrhi::ResourceStates::Present;
+        texDesc.keepInitialState = true;
         texDesc.debugName = "BackBuffer_" + std::to_string(i);
 
         m_SwapChainBuffers[i] = m_NvrhiDevice->createHandleForNativeTexture(
