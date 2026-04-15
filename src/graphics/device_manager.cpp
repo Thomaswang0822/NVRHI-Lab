@@ -9,23 +9,6 @@ namespace nvrhi_lab {
 
 namespace {
 
-class MessageCallback : public nvrhi::IMessageCallback {
-public:
-    void message(nvrhi::MessageSeverity severity, const char* messageText) override {
-        switch (severity) {
-            case nvrhi::MessageSeverity::Error:
-                LogError(messageText);
-                break;
-            case nvrhi::MessageSeverity::Warning:
-                LogWarning(messageText);
-                break;
-            case nvrhi::MessageSeverity::Info:
-                LogInfo(messageText);
-                break;
-        }
-    }
-};
-
 static MessageCallback g_MessageCallback;
 
 void GetWindowClientSize(void* windowHandle, uint32_t& width, uint32_t& height) {
