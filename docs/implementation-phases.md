@@ -2,7 +2,7 @@
 
 This document outlines the incremental implementation path from a minimal triangle to a fully interactive graphics testbed.
 
-**Current Status**: Phase 2 planning. Phase 1 complete (v0.1.6) - all three backends (D3D11, D3D12, Vulkan) working with visible triangle.
+**Current Status**: Phase 2 in progress (v0.1.7). Step 2.3 complete for D3D11/D3D12; Vulkan pending fix.
 
 ---
 
@@ -48,17 +48,18 @@ This document outlines the incremental implementation path from a minimal triang
 **Goal**: Render static 3D scene (background + 1 target)
 
 **Key Tasks:**
-1. Math Library Integration
+1. Math Library Integration ✅
    - Add GLM (cross-platform, header-only)
    - Helper functions: perspective(), lookAt()
 
-2. Camera System (`src/graphics/camera.h/cpp`)
+2. Camera System ✅ (`src/graphics/camera.h/cpp`)
    - View/projection matrices
    - Constant buffer for camera data
 
-3. Constant Buffer Infrastructure (`src/graphics/constant_buffer.h/cpp`)
+3. Constant Buffer Infrastructure ✅ (D3D11/D3D12) (`src/graphics/constant_buffer.h`)
    - Templated helper class for buffer management
    - Binding layout setup
+   - **Known Issue**: Vulkan descriptor set validation error
 
 4. Scene Object Base Class (`src/graphics/scene_object.h/cpp`)
    - Virtual `render()` method

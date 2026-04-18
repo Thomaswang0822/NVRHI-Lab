@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../utils/math_types.h"
+#include "camera_constants.h"
 
 namespace nvrhi_lab {
 
@@ -22,6 +23,8 @@ public:
     const glm::mat4& GetViewMatrix();
     const glm::mat4& GetProjectionMatrix();
     const glm::mat4& GetViewProjectionMatrix();
+
+    CameraConstants GetConstants();
 
     void LookAt(const glm::vec3& eye, const glm::vec3& target, const glm::vec3& up);
 
