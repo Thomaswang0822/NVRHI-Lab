@@ -2,7 +2,7 @@
 
 This document outlines the incremental implementation path from a minimal triangle to a fully interactive graphics testbed.
 
-**Current Status**: Phase 1 complete (v0.1.6). All three backends (D3D11, D3D12, Vulkan) working with visible triangle.
+**Current Status**: Phase 2 planning. Phase 1 complete (v0.1.6) - all three backends (D3D11, D3D12, Vulkan) working with visible triangle.
 
 ---
 
@@ -48,31 +48,41 @@ This document outlines the incremental implementation path from a minimal triang
 **Goal**: Render static 3D scene (background + 1 target)
 
 **Key Tasks:**
-1. Scene Object Interface (`src/graphics/scene_object.h/cpp`)
-   - Base class for renderable objects
-   - Virtual `render()` method
-   - Owns resources (buffers, textures, pipeline)
+1. Math Library Integration
+   - Add GLM (cross-platform, header-only)
+   - Helper functions: perspective(), lookAt()
 
-2. Background Wall (`src/graphics/background_wall.h/cpp`)
-   - Simple quad geometry
-   - Different texture types for experiments (mipmaps, formats, etc.)
-
-3. Simple Target (`src/graphics/target.h/cpp`)
-   - Sphere or box geometry
-   - Basic material
-
-4. Camera System (`src/graphics/camera.h/cpp`)
+2. Camera System (`src/graphics/camera.h/cpp`)
    - View/projection matrices
-   - Simple orbit or static view
+   - Constant buffer for camera data
 
-**Success Criteria**: Static 3D scene with background wall and one target
+3. Constant Buffer Infrastructure (`src/graphics/constant_buffer.h/cpp`)
+   - Templated helper class for buffer management
+   - Binding layout setup
+
+4. Scene Object Base Class (`src/graphics/scene_object.h/cpp`)
+   - Virtual `render()` method
+   - Common resource management
+
+5. Background Wall (`src/graphics/background_wall.h/cpp`)
+   - Quad geometry with index buffer
+   - Simple unlit shader
+
+6. Simple Target (`src/graphics/target.h/cpp`)
+   - Cube geometry
+   - Basic lit shader
+
+7. Scene Manager (`src/graphics/scene_manager.h/cpp`)
+   - Orchestrates all scene objects
+   - Manages shared resources (camera, depth buffer)
+
+**Success Criteria**: Static 3D scene with background wall and one target cube
 
 **NVRHI Concepts Learned**:
-- Buffers (vertex, index, constant)
-- Textures (different formats)
-- Resource bindings
-- Descriptor sets
-- Input layouts
+- Constant buffers (常量缓冲区)
+- Index buffers (索引缓冲区)
+- Resource bindings and binding layouts
+- Textures and samplers (optional)
 
 ---
 

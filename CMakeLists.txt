@@ -38,6 +38,10 @@ else()
     add_executable(${PROJECT_NAME} ${SOURCES})
 endif()
 
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}/thirdparty/glm
+)
+
 target_link_libraries(${PROJECT_NAME} PRIVATE
     wx::core wx::base
     nvrhi nvrhi_d3d11 nvrhi_d3d12 nvrhi_vk Vulkan-Headers Vulkan::Vulkan
