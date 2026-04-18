@@ -10,3 +10,6 @@
 [submodule "thirdparty/glm"]
 	path = thirdparty/glm
 	url = git@github.com:g-truc/glm.git
+[submodule "thirdparty/old-code"]
+	path = thirdparty/old-code
+	url = git@github.com:zjw-swun/old-code.git
