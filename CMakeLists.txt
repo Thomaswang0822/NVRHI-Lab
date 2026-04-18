@@ -58,6 +58,14 @@ FetchContent_Declare(NVRHI
     UPDATE_DISCONNECTED TRUE)
 FetchContent_MakeAvailable(NVRHI)
 
+# GLM：header-only 数学库（Phase 2 引入）。固定版本 tag，不用 GIT_SHALLOW
+# （shallow 与特定 tag/SHA 不兼容——见 project memory 教训）；GLM 仓库小，
+# 全量 clone 代价可忽略。自带 CMake，提供 glm::glm target
+FetchContent_Declare(glm
+    GIT_REPOSITORY https://gh-proxy.com/https://github.com/g-truc/glm.git
+    GIT_TAG        1.0.1)
+FetchContent_MakeAvailable(glm)
+
 find_package(Vulkan REQUIRED)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
@@ -82,6 +90,7 @@ if(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE
         wx::core wx::base
         nvrhi nvrhi_d3d11 nvrhi_d3d12 nvrhi_vk Vulkan-Headers Vulkan::Vulkan
+        glm::glm
     )
 
     target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -102,6 +111,7 @@ else()
     target_link_libraries(${PROJECT_NAME} PRIVATE
         wx::core wx::base
         nvrhi nvrhi_vk Vulkan-Headers Vulkan::Vulkan
+        glm::glm
     )
 
     if(APPLE)
