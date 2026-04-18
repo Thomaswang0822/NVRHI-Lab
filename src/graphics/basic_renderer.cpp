@@ -84,6 +84,33 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
     nvrhi::IDevice* device = m_DeviceManager->GetDevice();
     GraphicsBackend backend = m_DeviceManager->GetBackend();
     
+    float aspect = float(m_DeviceManager->GetWidth()) / float(m_DeviceManager->GetHeight());
+    m_Camera.LookAt(glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    m_Camera.SetPerspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+    
+    if (!m_CameraCB.Create(device, "CameraConstantBuffer")) {
+        LogError("BasicRenderer: Failed to create camera constant buffer");
+        return false;
+    }
+    
+    m_BindingLayout = device->createBindingLayout(
+        nvrhi::BindingLayoutDesc()
+            .setVisibility(nvrhi::ShaderType::Vertex)
+            .addItem(nvrhi::BindingLayoutItem::ConstantBuffer(0)));
+    if (!m_BindingLayout) {
+        LogError("BasicRenderer: Failed to create binding layout");
+        return false;
+    }
+    
+    m_BindingSet = device->createBindingSet(
+        nvrhi::BindingSetDesc()
+            .addItem(nvrhi::BindingSetItem::ConstantBuffer(0, m_CameraCB.GetBuffer())),
+        m_BindingLayout);
+    if (!m_BindingSet) {
+        LogError("BasicRenderer: Failed to create binding set");
+        return false;
+    }
+    
     std::string shaderExt = GetShaderExtension(backend);
     
     auto vsBytecode = LoadShaderFile("triangle.vs" + shaderExt, backend);
@@ -178,7 +205,8 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
     pipelineDesc.setInputLayout(inputLayout)
                 .setVertexShader(m_VertexShader)
                 .setRenderState(renderState)
-                .setPixelShader(m_PixelShader);
+                .setPixelShader(m_PixelShader)
+                .addBindingLayout(m_BindingLayout);
     
     m_Pipeline = device->createGraphicsPipeline(pipelineDesc, fbInfo);
     
@@ -203,6 +231,8 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
 }
 
 void BasicRenderer::Shutdown() {
+    m_BindingSet = nullptr;
+    m_BindingLayout = nullptr;
     m_CommandList = nullptr;
     m_Pipeline = nullptr;
     m_VertexBuffer = nullptr;
@@ -233,6 +263,8 @@ void BasicRenderer::Render() {
 
     m_CommandList->open();
     
+    m_CameraCB.Update(m_CommandList, m_Camera.GetConstants());
+    
     nvrhi::utils::ClearColorAttachment(m_CommandList, framebuffer, 0, nvrhi::Color(0.0f, 0.0f, 0.0f, 1.0f));
     nvrhi::utils::ClearDepthStencilAttachment(m_CommandList, framebuffer, 1.0f, 0);
     
@@ -241,7 +273,8 @@ void BasicRenderer::Render() {
          .setFramebuffer(framebuffer)
          .setViewport(nvrhi::ViewportState().addViewportAndScissorRect(
              nvrhi::Viewport(float(m_DeviceManager->GetWidth()), float(m_DeviceManager->GetHeight()))))
-         .addVertexBuffer(m_vertexBufferBinding);
+         .addVertexBuffer(m_vertexBufferBinding)
+         .addBindingSet(m_BindingSet);
     
     m_CommandList->setGraphicsState(state);
     

@@ -36,6 +36,19 @@ const glm::mat4& Camera::GetViewProjectionMatrix() {
     return m_ViewProjectionMatrix;
 }
 
+CameraConstants Camera::GetConstants() {
+    UpdateMatrices();
+    
+    CameraConstants constants;
+    constants.ViewMatrix = m_ViewMatrix;
+    constants.ProjectionMatrix = m_ProjectionMatrix;
+    constants.ViewProjectionMatrix = m_ViewProjectionMatrix;
+    constants.CameraPosition = m_Position;
+    constants._Padding = 0.0f;
+    
+    return constants;
+}
+
 void Camera::UpdateMatrices() {
     if (!m_Dirty) {
         return;

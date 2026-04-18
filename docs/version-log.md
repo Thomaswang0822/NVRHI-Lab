@@ -71,3 +71,18 @@ Phase 1 Complete: Vulkan Backend Implementation
 - Fixed resource state tracking with keepInitialState flag for back buffers
 - Added graphics-backends.md documentation comparing D3D11/D3D12/Vulkan APIs
 - **All three backends (D3D11, D3D12, Vulkan) now working - Phase 1 complete!**
+
+## 0.1.7
+
+Phase 2: Camera System & Constant Buffer Infrastructure
+
+- Added GLM math library as git submodule (thirdparty/glm)
+- Created math_types.h with GLM configuration for left-handed coordinate system
+- Implemented Camera class with view/projection matrix generation
+- Created ConstantBuffer<T> templated helper class for GPU buffer management
+- Added CameraConstants struct for CPU-GPU data sharing
+- Created shader cbuffer headers (HLSL + GLSL) for camera uniforms
+- Integrated camera with BasicRenderer using binding layout/set
+- Updated vertex shader to use ViewProjectionMatrix transformation
+- Added WIN32_LEAN_AND_MEAN with explanatory comment to avoid winsock conflicts
+- **D3D11/D3D12 working with camera transformation; Vulkan has descriptor set validation error**
