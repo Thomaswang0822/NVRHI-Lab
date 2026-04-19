@@ -1,4 +1,10 @@
 # Shader compilation configuration
+# 
+# HLSL-ONLY POLICY:
+# All shaders are written in HLSL. DXC from Vulkan SDK compiles HLSL to SPIR-V
+# using the -spirv flag. This means a single shader source works for all backends.
+# No GLSL files are needed or used.
+#
 # D3D12: Uses Visual Studio's native HLSL compiler (SM 6.4)
 # D3D11: Uses FXC compiler via CMake custom commands (SM 5.0)
 # Vulkan: Uses DXC compiler with -spirv flag (SM 6.4)

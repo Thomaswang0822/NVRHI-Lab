@@ -35,28 +35,34 @@ $msbuild = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.e
 
 ## Run Commands
 
+### CRITICAL: Working Directory
+**The app MUST be run from `build/` directory**, not project root or `bin/Debug/`.
+
+Why: Shaders are compiled to `build/shaders/` and the app looks for `shaders/` relative to working directory.
+
 ### Basic Run (Single Backend)
 ```powershell
-# From project root
-& bin\Debug\NVRHI-Lab.exe --backend=d3d12
+# From build/ directory
+Push-Location build
+& ..\bin\Debug\NVRHI-Lab.exe --backend=d3d12
+Pop-Location
 ```
 
 ### Run with Frame Limit (Automated Testing)
 ```powershell
 # Exit after N frames - useful for automated testing
-& bin\Debug\NVRHI-Lab.exe --backend=vulkan --frameNum=10
+Push-Location build
+& ..\bin\Debug\NVRHI-Lab.exe --backend=vulkan --frameNum=10 2>&1
+Pop-Location
 ```
 
 ### Test All Backends
 ```powershell
-# Test D3D11
-& bin\Debug\NVRHI-Lab.exe --backend=d3d11 --frameNum=5
-
-# Test D3D12
-& bin\Debug\NVRHI-Lab.exe --backend=d3d12 --frameNum=5
-
-# Test Vulkan
-& bin\Debug\NVRHI-Lab.exe --backend=vulkan --frameNum=5
+Push-Location build
+& ..\bin\Debug\NVRHI-Lab.exe --backend=d3d11 --frameNum=5 2>&1
+& ..\bin\Debug\NVRHI-Lab.exe --backend=d3d12 --frameNum=5 2>&1
+& ..\bin\Debug\NVRHI-Lab.exe --backend=vulkan --frameNum=5 2>&1
+Pop-Location
 ```
 
 ## Error Checking
@@ -95,5 +101,6 @@ Watch for `[Error]` prefix in output:
 
 - **Why MSBuild instead of `cmake --build`**: Consistency with Visual Studio workflow
 - **Why not VS "Rebuild All"**: Race condition with CMake custom build steps causes `error MSB8066`
-- **Working directory**: Always run from project root, not `build/` directory
-- **Shader paths**: App expects shaders relative to working directory
+- **Working directory**: **MUST be `build/`** - shaders are at `build/shaders/`
+- **Logging**: All errors go to stderr (non-blocking, no popup dialogs)
+- **Exit codes**: 0 = success, non-zero = failure

@@ -17,6 +17,7 @@ This file is the primary project harness - rules that govern how the AI agent sh
 - Use libraries/frameworks already present in the project
 - Add **concise and useful comments at important locations** (not every line needs comments)
 - Comments should explain "why" not "what" (code should be self-documenting for "what")
+- **CRITICAL: Never delete existing comments** unless explicitly asked by user
 - **CRITICAL: Always add comments for magical macros/flags** explaining:
   - What the macro/flag does
   - Why it's needed (what problem it solves)
@@ -78,8 +79,10 @@ m_Timer.Start(16);      // Auto-stopped on destruction
 Key points (detailed workflow in skill):
 - Use MSBuild (via `vswhere`) for consistency with Visual Studio
 - Avoid VS "Rebuild All" - causes race conditions with CMake custom build steps
+- **Working directory MUST be `build/`** - shaders are at `build/shaders/`
 - Test all three backends after rendering changes
 - Use `--frameNum=N` for automated testing
+- **Logging**: All errors go to stderr (non-blocking, no popup dialogs)
 
 ## Debugging & Logging
 

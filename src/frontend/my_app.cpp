@@ -2,6 +2,7 @@
 #include "../graphics/device_manager.h"
 #include "../graphics/basic_renderer.h"
 #include "../graphics/camera_controller.h"
+#include "../utils/logging.h"
 
 #include <wx/msgdlg.h>
 
@@ -102,11 +103,11 @@ bool MyApp::OnInit() {
         if (selectedBackend == nvrhi_lab::GraphicsBackend::D3D12) {
             desc.backend = nvrhi_lab::GraphicsBackend::D3D11;
             if (!m_DeviceManager->Initialize(desc, windowHandle)) {
-                wxMessageBox("Failed to initialize graphics device!", "Error", wxOK | wxICON_ERROR);
+                nvrhi_lab::LogError("Failed to initialize graphics device!");
                 return false;
             }
         } else {
-            wxMessageBox("Failed to initialize graphics device!", "Error", wxOK | wxICON_ERROR);
+            nvrhi_lab::LogError("Failed to initialize graphics device!");
             return false;
         }
 #else
@@ -114,20 +115,19 @@ bool MyApp::OnInit() {
         return false;
 #endif
     }
-    
+
     // Pass device manager to frame
     frame->SetDeviceManager(m_DeviceManager.get());
-    
     // Show success message + camera controls hint
     wxString msg;
     msg.Printf("%s | WASD/RF move, arrows look, Q/E turn",
                m_DeviceManager->GetBackendName());
     frame->SetStatusText(msg);
-    
+
     // Create and initialize BasicRenderer
     m_Renderer = std::make_unique<nvrhi_lab::BasicRenderer>();
     if (!m_Renderer->Initialize(m_DeviceManager.get())) {
-        wxMessageBox("Failed to initialize BasicRenderer!", "Error", wxOK | wxICON_ERROR);
+        nvrhi_lab::LogError("Failed to initialize BasicRenderer!");
         return false;
     }
     
