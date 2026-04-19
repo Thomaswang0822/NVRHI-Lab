@@ -96,6 +96,11 @@ bool BasicRenderer::Initialize(DeviceManager* deviceManager) {
     m_BindingLayout = device->createBindingLayout(
         nvrhi::BindingLayoutDesc()
             .setVisibility(nvrhi::ShaderType::Vertex)
+            .setBindingOffsets(nvrhi::VulkanBindingOffsets()
+                .setConstantBufferOffset(0)
+                .setShaderResourceOffset(0)
+                .setSamplerOffset(0)
+                .setUnorderedAccessViewOffset(0))
             .addItem(nvrhi::BindingLayoutItem::ConstantBuffer(0)));
     if (!m_BindingLayout) {
         LogError("BasicRenderer: Failed to create binding layout");

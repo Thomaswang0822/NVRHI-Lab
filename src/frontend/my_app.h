@@ -23,6 +23,7 @@ public:
     MyFrame();
     void SetDeviceManager(nvrhi_lab::DeviceManager* deviceManager);
     void SetRenderer(nvrhi_lab::BasicRenderer* renderer);
+    void SetMaxFrames(int maxFrames);
 
 private:
     void OnHello(wxCommandEvent& event);
@@ -33,6 +34,8 @@ private:
     nvrhi_lab::DeviceManager* m_DeviceManager = nullptr;
     nvrhi_lab::BasicRenderer* m_Renderer = nullptr;
     wxTimer m_RenderTimer;
+    int m_FrameCount = 0;
+    int m_MaxFrames = -1;
 
     wxDECLARE_EVENT_TABLE();
 };

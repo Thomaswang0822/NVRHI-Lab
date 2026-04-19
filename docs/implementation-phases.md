@@ -2,7 +2,7 @@
 
 This document outlines the incremental implementation path from a minimal triangle to a fully interactive graphics testbed.
 
-**Current Status**: Phase 2 in progress (v0.1.7). Step 2.3 complete for D3D11/D3D12; Vulkan pending fix.
+**Current Status**: Phase 2 in progress (v0.1.7). Step 2.3 complete - all three backends working.
 
 ---
 
@@ -56,10 +56,10 @@ This document outlines the incremental implementation path from a minimal triang
    - View/projection matrices
    - Constant buffer for camera data
 
-3. Constant Buffer Infrastructure ✅ (D3D11/D3D12) (`src/graphics/constant_buffer.h`)
+3. Constant Buffer Infrastructure ✅ (`src/graphics/constant_buffer.h`)
    - Templated helper class for buffer management
    - Binding layout setup
-   - **Known Issue**: Vulkan descriptor set validation error
+   - **Note**: For Vulkan, must set `VulkanBindingOffsets` to 0 to match DXC's register-to-binding mapping
 
 4. Scene Object Base Class (`src/graphics/scene_object.h/cpp`)
    - Virtual `render()` method

@@ -85,4 +85,6 @@ Phase 2: Camera System & Constant Buffer Infrastructure
 - Integrated camera with BasicRenderer using binding layout/set
 - Updated vertex shader to use ViewProjectionMatrix transformation
 - Added WIN32_LEAN_AND_MEAN with explanatory comment to avoid winsock conflicts
-- **D3D11/D3D12 working with camera transformation; Vulkan has descriptor set validation error**
+- Added --frameNum=N command line option for automated testing
+- Fixed Vulkan binding offset mismatch: NVRHI defaults constantBuffer=256, DXC maps register(b0) to binding 0
+- **All three backends (D3D11, D3D12, Vulkan) working with camera transformation**
