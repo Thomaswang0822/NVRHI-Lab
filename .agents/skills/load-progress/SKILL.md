@@ -24,7 +24,7 @@ Write to context files when:
 - User explicitly requests with prompts like "write to our continuity log", "update context", "note this decision", or similar
 - User forgets to instruct but confirms when asked "Should I update the context files with this decision?"
 
-Write context files only for information that affects how the AI agent should behave or what decisions must be respected in future work. Refer to `.agents/contexts/RULES.md` for guidance on what to include vs. exclude.
+Write context files only for information that affects how the AI agent should behave or what decisions must be respected in future work. Refer to `.agents/harness/RULES.md` for guidance on what to include vs. exclude.
 
 ## How to Use
 
@@ -55,8 +55,8 @@ When updating context files:
    - **IMPLEMENTATION_PLAN.md**: Project structure, learning sequence, feature modules, milestones
    - **LEARNING_PURPOSE.md**: Learning goals, boundaries, what to learn vs. not learn
    - **PROJECT_DESIGN.md**: Overview, philosophy, primary focus, learning path
-   - **RULES.md**: Communication rules, code conventions, execution mode, git workflow
    - **TECH_STACK.md**: Core technologies, languages, tools, development environment
+   - **Note**: RULES.md is now in `.agents/harness/` - the project harness folder
 
 2. Read the existing file first to understand current content
 

@@ -24,4 +24,9 @@ bin/
 lib/
 
 # .vscode
+
+# Agent context files (session continuity, auto-generated)
 .agents/contexts
+
+# Agent harness (project rules, should be versioned)
+# .agents/harness is NOT ignored - it contains important project rules

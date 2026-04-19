@@ -10,6 +10,7 @@ bool MyApp::OnInit() {
 #else
     nvrhi_lab::GraphicsBackend selectedBackend = nvrhi_lab::GraphicsBackend::Vulkan;
 #endif
+    int maxFrames = -1;
     
     for (int i = 1; i < argc; ++i) {
         wxString arg = argv[i];
@@ -22,6 +23,12 @@ bool MyApp::OnInit() {
             } else if (value == "vulkan") {
                 selectedBackend = nvrhi_lab::GraphicsBackend::Vulkan;
             }
+        } else if (arg.StartsWith("--frameNum=")) {
+            wxString value = arg.AfterFirst('=');
+            long frameNum;
+            if (value.ToLong(&frameNum) && frameNum > 0) {
+                maxFrames = static_cast<int>(frameNum);
+            }
         } else if (arg == "--help" || arg == "-h") {
 #ifdef _WIN32
             wxMessageBox("Usage: NVRHI-Lab.exe [options]\n\n"
@@ -29,12 +36,14 @@ bool MyApp::OnInit() {
                         "  --backend=d3d11   Use Direct3D 11 backend\n"
                         "  --backend=d3d12   Use Direct3D 12 backend (default)\n"
                         "  --backend=vulkan  Use Vulkan backend\n"
+                        "  --frameNum=N      Exit after N frames (for automated testing)\n"
                         "  --help, -h        Show this help message",
                         "Command Line Options", wxOK | wxICON_INFORMATION);
 #else
             wxMessageBox("Usage: NVRHI-Lab [options]\n\n"
                         "Options:\n"
                         "  --backend=vulkan  Use Vulkan backend (default)\n"
+                        "  --frameNum=N      Exit after N frames (for automated testing)\n"
                         "  --help, -h        Show this help message",
                         "Command Line Options", wxOK | wxICON_INFORMATION);
 #endif
@@ -44,6 +53,10 @@ bool MyApp::OnInit() {
     
     MyFrame* frame = new MyFrame();
     frame->Show(true);
+    
+    if (maxFrames > 0) {
+        frame->SetMaxFrames(maxFrames);
+    }
     
     m_DeviceManager = std::make_unique<nvrhi_lab::DeviceManager>();
     
@@ -136,6 +149,10 @@ void MyFrame::SetRenderer(nvrhi_lab::BasicRenderer* renderer) {
     m_RenderTimer.Start(16);  // ~60 FPS
 }
 
+void MyFrame::SetMaxFrames(int maxFrames) {
+    m_MaxFrames = maxFrames;
+}
+
 void MyFrame::OnExit(wxCommandEvent& event) {
     if (m_RenderTimer.IsRunning()) {
         m_RenderTimer.Stop();
@@ -166,6 +183,13 @@ void MyFrame::OnRenderTimer(wxTimerEvent& event) {
         m_DeviceManager->BeginFrame();
         m_Renderer->Render();
         m_DeviceManager->Present();
+        
+        m_FrameCount++;
+        
+        if (m_MaxFrames > 0 && m_FrameCount >= m_MaxFrames) {
+            m_RenderTimer.Stop();
+            Close(true);
+        }
     }
 }
 
