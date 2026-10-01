@@ -1,8 +1,13 @@
 #include "device_manager.h"
 
+#ifdef _WIN32
 #include "platform/d3d11_context.h"
 #include "platform/d3d12_context.h"
+#endif
 #include "platform/vulkan_context.h"
+#ifdef __APPLE__
+#include "platform/macos_surface.h"
+#endif
 #include "../utils/logging.h"
 
 namespace nvrhi_lab {
@@ -29,12 +34,15 @@ public:
 static MessageCallback g_MessageCallback;
 
 void GetWindowClientSize(void* windowHandle, uint32_t& width, uint32_t& height) {
-#ifdef WIN32
+#ifdef _WIN32
     HWND hwnd = static_cast<HWND>(windowHandle);
     RECT rect;
     GetClientRect(hwnd, &rect);
     width = static_cast<uint32_t>(rect.right - rect.left);
     height = static_cast<uint32_t>(rect.bottom - rect.top);
+#elif defined(__APPLE__)
+    // windowHandle 为 NSView*，返回像素尺寸（Retina 下为逻辑尺寸 × backingScaleFactor）
+    GetViewClientPixelSize(windowHandle, width, height);
 #else
     width = 1280;
     height = 720;
@@ -62,15 +70,22 @@ bool DeviceManager::Initialize(const DeviceManagerDesc& desc, void* windowHandle
     GetWindowClientSize(windowHandle, m_Desc.width, m_Desc.height);
 
     switch (m_Desc.backend) {
+#ifdef _WIN32
         case GraphicsBackend::D3D12:
             m_Platform = std::make_unique<D3D12Context>();
             break;
         case GraphicsBackend::D3D11:
             m_Platform = std::make_unique<D3D11Context>();
             break;
+#endif
         case GraphicsBackend::Vulkan:
             m_Platform = std::make_unique<VulkanContext>();
             break;
+    }
+
+    if (!m_Platform) {
+        LogError("Selected backend is not available on this platform");
+        return false;
     }
 
     m_Device = m_Platform->createNvrhiDevice(&g_MessageCallback, m_Desc.enableValidation);

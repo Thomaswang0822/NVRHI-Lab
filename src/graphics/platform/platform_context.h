@@ -27,7 +27,9 @@ public:
 protected:
     int m_Width = 0;
     int m_Height = 0;
-    nvrhi::Format m_SwapChainFormat = nvrhi::Format::RGBA8_UNORM;
+    // 统一使用 BGRA8_UNORM：Windows DXGI 与 MoltenVK/CAMetalLayer 唯一共同
+    // 原生支持的 8bit 交换链格式（RGBA8 在 CAMetalLayer 上不可用）
+    nvrhi::Format m_SwapChainFormat = nvrhi::Format::BGRA8_UNORM;
 };
 
 } // namespace nvrhi_lab

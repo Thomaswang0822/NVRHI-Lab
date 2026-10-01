@@ -1,7 +1,16 @@
 #pragma once
 
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#endif
+
+#ifdef __APPLE__
+// 启用 VK_EXT_metal_surface 绑定（vulkan_metal.h / vk::MetalSurfaceCreateInfoEXT）
+#define VK_USE_PLATFORM_METAL_EXT 1
+// portability subset 属于 beta 扩展，需要此宏才能引入其定义
+#define VK_ENABLE_BETA_EXTENSIONS 1
+#endif
 
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>

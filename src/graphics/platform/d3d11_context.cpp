@@ -84,7 +84,7 @@ void D3D11Context::createSwapChain(void* windowHandle, int width, int height, in
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.Width = static_cast<UINT>(width);
     swapChainDesc.Height = static_cast<UINT>(height);
-    swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
     swapChainDesc.SampleDesc.Count = 1;
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.BufferCount = static_cast<UINT>(backBufferCount);

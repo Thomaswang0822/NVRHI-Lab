@@ -5,7 +5,11 @@
 #include <wx/msgdlg.h>
 
 bool MyApp::OnInit() {
+#ifdef _WIN32
     nvrhi_lab::GraphicsBackend selectedBackend = nvrhi_lab::GraphicsBackend::D3D12;
+#else
+    nvrhi_lab::GraphicsBackend selectedBackend = nvrhi_lab::GraphicsBackend::Vulkan;
+#endif
     
     for (int i = 1; i < argc; ++i) {
         wxString arg = argv[i];
@@ -19,13 +23,21 @@ bool MyApp::OnInit() {
                 selectedBackend = nvrhi_lab::GraphicsBackend::Vulkan;
             }
         } else if (arg == "--help" || arg == "-h") {
+#ifdef _WIN32
             wxMessageBox("Usage: NVRHI-Lab.exe [options]\n\n"
                         "Options:\n"
                         "  --backend=d3d11   Use Direct3D 11 backend\n"
                         "  --backend=d3d12   Use Direct3D 12 backend (default)\n"
-                        "  --backend=vulkan  Use Vulkan backend (not implemented)\n"
+                        "  --backend=vulkan  Use Vulkan backend\n"
                         "  --help, -h        Show this help message",
                         "Command Line Options", wxOK | wxICON_INFORMATION);
+#else
+            wxMessageBox("Usage: NVRHI-Lab [options]\n\n"
+                        "Options:\n"
+                        "  --backend=vulkan  Use Vulkan backend (default)\n"
+                        "  --help, -h        Show this help message",
+                        "Command Line Options", wxOK | wxICON_INFORMATION);
+#endif
             return false;
         }
     }
@@ -43,6 +55,8 @@ bool MyApp::OnInit() {
     void* windowHandle = reinterpret_cast<void*>(frame->GetHandle());
     
     if (!m_DeviceManager->Initialize(desc, windowHandle)) {
+#ifdef _WIN32
+        // Windows 上 D3D12 初始化失败时回退到 D3D11
         if (selectedBackend == nvrhi_lab::GraphicsBackend::D3D12) {
             desc.backend = nvrhi_lab::GraphicsBackend::D3D11;
             if (!m_DeviceManager->Initialize(desc, windowHandle)) {
@@ -53,6 +67,10 @@ bool MyApp::OnInit() {
             wxMessageBox("Failed to initialize graphics device!", "Error", wxOK | wxICON_ERROR);
             return false;
         }
+#else
+        wxMessageBox("Failed to initialize graphics device!", "Error", wxOK | wxICON_ERROR);
+        return false;
+#endif
     }
     
     // Pass device manager to frame

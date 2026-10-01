@@ -4,6 +4,10 @@
 
 #include <nvrhi/validation.h>
 
+#ifdef __APPLE__
+#include "macos_surface.h"
+#endif
+
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 namespace nvrhi_lab {
@@ -68,13 +72,21 @@ nvrhi::DeviceHandle VulkanContext::createNvrhiDevice(nvrhi::IMessageCallback* me
     appInfo.apiVersion = VK_API_VERSION_1_3;
 
     std::vector<const char*> instanceExtensions = {
-        VK_KHR_SURFACE_EXTENSION_NAME,
-        VK_KHR_WIN32_SURFACE_EXTENSION_NAME
+        VK_KHR_SURFACE_EXTENSION_NAME
     };
+#ifdef _WIN32
+    instanceExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#endif
+#ifdef __APPLE__
+    instanceExtensions.push_back(VK_EXT_METAL_SURFACE_EXTENSION_NAME);
+    // MoltenVK 需要开启 portability 枚举才会被 vkEnumeratePhysicalDevices 返回
+    instanceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+#endif
 
     std::vector<const char*> instanceLayers;
 
-#if defined(_DEBUG)
+    // clang 下 Debug 构建不会自动定义 _DEBUG，用 NDEBUG 判断（MSVC Debug 两者都满足）
+#if defined(_DEBUG) || !defined(NDEBUG)
     auto availableLayers = vk::enumerateInstanceLayerProperties();
     for (const auto& layer : availableLayers) {
         if (strcmp(layer.layerName, "VK_LAYER_KHRONOS_validation") == 0) {
@@ -88,6 +100,9 @@ nvrhi::DeviceHandle VulkanContext::createNvrhiDevice(nvrhi::IMessageCallback* me
     instanceCreateInfo.pApplicationInfo = &appInfo;
     instanceCreateInfo.setPEnabledExtensionNames(instanceExtensions);
     instanceCreateInfo.setPEnabledLayerNames(instanceLayers);
+#ifdef __APPLE__
+    instanceCreateInfo.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+#endif
 
     try {
         m_Instance = vk::createInstance(instanceCreateInfo);
@@ -144,6 +159,18 @@ nvrhi::DeviceHandle VulkanContext::createNvrhiDevice(nvrhi::IMessageCallback* me
     std::vector<const char*> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
+#ifdef __APPLE__
+    // MoltenVK 属于 portability 实现，若设备报告 VK_KHR_portability_subset 则必须启用
+    {
+        auto availableExtensions = m_PhysicalDevice.enumerateDeviceExtensionProperties();
+        for (const auto& ext : availableExtensions) {
+            if (strcmp(ext.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0) {
+                deviceExtensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+                break;
+            }
+        }
+    }
+#endif
 
     vk::PhysicalDeviceVulkan12Features vulkan12Features;
     vulkan12Features.timelineSemaphore = VK_TRUE;
@@ -204,6 +231,7 @@ void VulkanContext::createSwapChain(void* windowHandle, int width, int height, i
         return;
     }
 
+#ifdef _WIN32
     HWND hwnd = static_cast<HWND>(windowHandle);
 
     vk::Win32SurfaceCreateInfoKHR surfaceCreateInfo;
@@ -216,6 +244,27 @@ void VulkanContext::createSwapChain(void* windowHandle, int width, int height, i
         LogError("Vulkan: Failed to create Win32 surface: " + std::string(e.what()));
         return;
     }
+#elif defined(__APPLE__)
+    // windowHandle 为 NSView*：挂接 CAMetalLayer 后创建 Metal surface
+    void* caMetalLayer = CreateMetalLayerForView(windowHandle);
+    if (!caMetalLayer) {
+        LogError("Vulkan: Failed to attach CAMetalLayer to NSView");
+        return;
+    }
+
+    vk::MetalSurfaceCreateInfoEXT surfaceCreateInfo;
+    surfaceCreateInfo.pLayer = static_cast<const CAMetalLayer*>(caMetalLayer);
+
+    try {
+        m_Surface = m_Instance.createMetalSurfaceEXT(surfaceCreateInfo);
+    } catch (const vk::SystemError& e) {
+        LogError("Vulkan: Failed to create Metal surface: " + std::string(e.what()));
+        return;
+    }
+#else
+    LogError("Vulkan: Unsupported platform for surface creation");
+    return;
+#endif
 
     vk::Bool32 presentSupport = m_PhysicalDevice.getSurfaceSupportKHR(
         static_cast<uint32_t>(m_GraphicsQueueFamilyIndex), m_Surface);
@@ -240,7 +289,7 @@ void VulkanContext::createSwapChain(void* windowHandle, int width, int height, i
         }
     }
     if (!formatFound) {
-        LogError("Vulkan: Desired swap chain format RGBA8_UNORM is not supported");
+        LogError("Vulkan: Desired swap chain format is not supported by the surface");
         return;
     }
 
@@ -295,15 +344,17 @@ void VulkanContext::createSwapChain(void* windowHandle, int width, int height, i
 
     auto swapChainImages = m_Device.getSwapchainImagesKHR(m_SwapChain);
 
-    m_Width = width;
-    m_Height = height;
+    // 注意：必须用交换链的实际 extent（像素），而非窗口逻辑尺寸
+    // （macOS Retina 下二者相差 backingScaleFactor 倍）
+    m_Width = static_cast<int>(extent.width);
+    m_Height = static_cast<int>(extent.height);
     m_BackBufferCount = static_cast<int>(swapChainImages.size());
 
     m_SwapChainBuffers.resize(swapChainImages.size());
     for (size_t i = 0; i < swapChainImages.size(); ++i) {
         nvrhi::TextureDesc texDesc;
-        texDesc.width = static_cast<uint32_t>(width);
-        texDesc.height = static_cast<uint32_t>(height);
+        texDesc.width = extent.width;
+        texDesc.height = extent.height;
         texDesc.format = m_SwapChainFormat;
         texDesc.isRenderTarget = true;
         texDesc.initialState = nvrhi::ResourceStates::Present;
@@ -351,6 +402,25 @@ size_t VulkanContext::getCurrentBackBufferIndex() {
         return 0;
     }
 
+    // 提交一个空 submit 等待 acquire semaphore：渲染命令由 NVRHI 内部提交、
+    // 无法注入 semaphore，因此用这个空 submit 建立依赖，保证后续渲染在演示
+    // 引擎释放图像之后才开始执行（否则触发 validation 错误：
+    // non-acquired-swapchain-image-used）。
+    vk::PipelineStageFlags acquireWaitStages[] = {
+        vk::PipelineStageFlagBits::eColorAttachmentOutput
+    };
+    vk::SubmitInfo acquireSubmitInfo;
+    acquireSubmitInfo.waitSemaphoreCount = 1;
+    acquireSubmitInfo.pWaitSemaphores = &m_ImageAvailableSemaphore;
+    acquireSubmitInfo.pWaitDstStageMask = acquireWaitStages;
+
+    try {
+        m_GraphicsQueue.submit(acquireSubmitInfo);
+    } catch (const vk::SystemError& e) {
+        LogError("Vulkan: Failed to submit acquire wait: " + std::string(e.what()));
+        return 0;
+    }
+
     m_CurrentImageIndex = acquireResult.value;
     return static_cast<size_t>(m_CurrentImageIndex);
 }
@@ -360,12 +430,9 @@ void VulkanContext::present(bool vsync) {
         return;
     }
 
-    vk::PipelineStageFlags waitStages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
-
+    // 空 submit：渲染命令由 NVRHI 内部提交（先于本 submit 入队，同队列按提交顺序执行），
+    // 这里只负责发出 RenderFinished 信号并携带 fence 供下一帧等待
     vk::SubmitInfo submitInfo;
-    submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = &m_ImageAvailableSemaphore;
-    submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = &m_RenderFinishedSemaphore;
 
