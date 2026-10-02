@@ -58,12 +58,14 @@ FetchContent_Declare(NVRHI
     UPDATE_DISCONNECTED TRUE)
 FetchContent_MakeAvailable(NVRHI)
 
-# GLM：header-only 数学库（Phase 2 引入）。固定版本 tag，不用 GIT_SHALLOW
-# （shallow 与特定 tag/SHA 不兼容——见 project memory 教训）；GLM 仓库小，
-# 全量 clone 代价可忽略。自带 CMake，提供 glm::glm target
+# GLM：header-only 数学库（Phase 2 引入）。稳定库钉住 release tag（与 wx/NVRHI
+# 的 rolling 策略不同——那两个是刻意追上游）。不用 GIT_SHALLOW（shallow 与特定
+# tag/SHA 不兼容——见 project memory 教训）；GLM 仓库小，全量 clone 代价可忽略。
+# 自带 CMake，提供 glm::glm target。查最新 tag：
+# git ls-remote --tags <mirror-url> | sort -V
 FetchContent_Declare(glm
     GIT_REPOSITORY https://gh-proxy.com/https://github.com/g-truc/glm.git
-    GIT_TAG        1.0.1)
+    GIT_TAG        1.0.3)
 FetchContent_MakeAvailable(glm)
 
 find_package(Vulkan REQUIRED)
