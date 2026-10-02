@@ -33,31 +33,29 @@ FetchContent_Declare(wxWidgets
     UPDATE_DISCONNECTED TRUE)
 FetchContent_MakeAvailable(wxWidgets)
 
-# Vulkan-Headers：版本对齐 NVRHI@5410046 的嵌套 pin（v1.4.328）。
-# 先于 NVRHI 提供 target，NVRHI 的 `NOT TARGET Vulkan-Headers` 守卫会
-# 跳过其 FetchContent 后必为空的嵌套 submodule 目录
-FetchContent_Declare(Vulkan-Headers
-    GIT_REPOSITORY https://gh-proxy.com/https://github.com/KhronosGroup/Vulkan-Headers.git
-    GIT_TAG        v1.4.328
-    GIT_SHALLOW    TRUE)
-FetchContent_MakeAvailable(Vulkan-Headers)
-
+# NVRHI 的开关用 CACHE 变量设置：NVRHI 内部用 option() 声明同名开关，而其
+# cmake_minimum_required(3.11) 让 CMP0077 保持旧语义——option() 会清除同名
+# 普通变量（之前的 configure warning 由此而来）。CACHE 变量不受 option()
+# 影响；上面的镜像 URL 变量即用此法注入，已验证可靠
 if(WIN32)
-    set(NVRHI_WITH_DX11 ON)
-    set(NVRHI_WITH_DX12 ON)
-    # D3D12 后端依赖，对齐 NVRHI 嵌套 pin（裸 SHA 不能加 GIT_SHALLOW）
-    FetchContent_Declare(DirectX-Headers
-        GIT_REPOSITORY https://gh-proxy.com/https://github.com/microsoft/DirectX-Headers.git
-        GIT_TAG        d873b344dc540898868697245f100c2a67fe68d9)
-    FetchContent_MakeAvailable(DirectX-Headers)
+    set(NVRHI_WITH_DX11 ON CACHE BOOL "")
+    set(NVRHI_WITH_DX12 ON CACHE BOOL "")
 endif()
+set(NVRHI_WITH_VULKAN ON CACHE BOOL "")
+set(NVRHI_WITH_VALIDATION ON CACHE BOOL "")
 
-set(NVRHI_WITH_VULKAN ON)
-set(NVRHI_WITH_VALIDATION ON)
+# NVRHI：rolling，跟踪 main tip（首次 populate 时解析；UPDATE_DISCONNECTED
+# 跳过每次 configure 的 fetch，刷新 = 删 build/_deps/nvrhi-* 再 configure）。
+# 新版 NVRHI 无嵌套 submodule，自己用 FetchContent 拉取 Vulkan-Headers /
+# DirectX-Headers，仓库地址用这两个 cache 变量覆盖为镜像（默认直连 github）
+set(NVRHI_VULKAN_HEADERS_GIT_REPOSITORY "https://gh-proxy.com/https://github.com/KhronosGroup/Vulkan-Headers.git" CACHE STRING "")
+set(NVRHI_DIRECTX_HEADERS_GIT_REPOSITORY "https://gh-proxy.com/https://github.com/microsoft/DirectX-Headers.git" CACHE STRING "")
 FetchContent_Declare(NVRHI
     GIT_REPOSITORY https://gh-proxy.com/https://github.com/NVIDIA-RTX/NVRHI.git
-    GIT_TAG        54100464714de88a5a5059d25808f5ccb914ad7d
-    GIT_PROGRESS   TRUE)
+    GIT_TAG        main
+    GIT_SHALLOW    TRUE
+    GIT_PROGRESS   TRUE
+    UPDATE_DISCONNECTED TRUE)
 FetchContent_MakeAvailable(NVRHI)
 
 find_package(Vulkan REQUIRED)
@@ -98,9 +96,9 @@ else()
     setup_shader_compilation(${PROJECT_NAME})
 
     # 必须与 NVRHI 用同一套 Vulkan 头文件（共享 VULKAN_HPP_DEFAULT_DISPATCHER，
-    # 版本不一致会触发 getVkHeaderVersion() 断言）。链接 Vulkan-Headers target
-    # 即可获得 FetchContent 拉取的 v1.4.328 头文件路径；
-    # 必须排在 Vulkan::Vulkan 之前，确保 v328 优先于系统 SDK 的 v363
+    # 版本不一致会触发 getVkHeaderVersion() 断言）。Vulkan-Headers target 由
+    # NVRHI 内部 FetchContent 提供；必须排在 Vulkan::Vulkan 之前，
+    # 确保其头文件优先于系统 SDK 的高版本
     target_link_libraries(${PROJECT_NAME} PRIVATE
         wx::core wx::base
         nvrhi nvrhi_vk Vulkan-Headers Vulkan::Vulkan
