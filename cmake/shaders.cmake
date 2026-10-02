@@ -147,7 +147,8 @@ function(_compile_shader_d3d11 SHADER_PATH SHADER_TYPE_SUFFIX)
     
     _get_shader_target(${SHADER_TYPE_SUFFIX} ${SHADER_MODEL_D3D11} TARGET)
     
-    set(OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders/d3d11")
+    # 输出到 bin/shaders（与可执行文件同目录树，运行时按 exe 相对路径查找）
+    set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/bin/shaders/d3d11")
     set(OUTPUT_CSO "${OUTPUT_DIR}/${NAME}.cso")
     set(OUTPUT_PDB "${OUTPUT_DIR}/${NAME}.pdb")
     
@@ -176,7 +177,8 @@ function(_compile_shader_vulkan SHADER_PATH SHADER_TYPE_SUFFIX)
     
     _get_shader_target(${SHADER_TYPE_SUFFIX} ${SHADER_MODEL_VULKAN} TARGET)
     
-    set(OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders/vulkan")
+    # 输出到 bin/shaders（与可执行文件同目录树，运行时按 exe 相对路径查找）
+    set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/bin/shaders/vulkan")
     set(OUTPUT_SPV "${OUTPUT_DIR}/${NAME}.spv")
     
     add_custom_command(

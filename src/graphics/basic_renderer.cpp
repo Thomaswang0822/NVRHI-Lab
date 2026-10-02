@@ -4,7 +4,16 @@
 
 #include <nvrhi/utils.h>
 #include <fstream>
+#include <filesystem>
 #include <vector>
+
+#ifdef _WIN32
+    #include <windows.h>
+#elif defined(__APPLE__)
+    #include <mach-o/dyld.h>
+#else
+    #include <unistd.h>
+#endif
 
 namespace nvrhi_lab {
 
@@ -21,13 +30,34 @@ static const Vertex g_Vertices[] = {
     { { -0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
 };
 
+// 可执行文件所在目录（bin/）。shader 查找基于它而非 CWD，
+// 使任何启动方式（VSCode launch / terminal / 双击）都能定位 bin/shaders/
+std::filesystem::path ExecutableDir()
+{
+#ifdef _WIN32
+    wchar_t path[MAX_PATH] = {};
+    GetModuleFileNameW(nullptr, path, MAX_PATH);
+    return std::filesystem::path(path).parent_path();
+#elif defined(__APPLE__)
+    uint32_t size = 0;
+    _NSGetExecutablePath(nullptr, &size);
+    std::vector<char> buffer(size);
+    _NSGetExecutablePath(buffer.data(), &size);
+    return std::filesystem::path(buffer.data()).lexically_normal().parent_path();
+#else
+    return std::filesystem::read_symlink("/proc/self/exe").lexically_normal().parent_path();
+#endif
+}
+
 std::string GetShaderSubdirectory(GraphicsBackend backend) {
+    const char* subDir = "";
     switch (backend) {
-        case GraphicsBackend::D3D11: return "shaders/d3d11/";
-        case GraphicsBackend::D3D12: return "shaders/d3d12/";
-        case GraphicsBackend::Vulkan: return "shaders/vulkan/";
-        default: return "shaders/";
+        case GraphicsBackend::D3D11:  subDir = "d3d11";  break;
+        case GraphicsBackend::D3D12:  subDir = "d3d12";  break;
+        case GraphicsBackend::Vulkan: subDir = "vulkan"; break;
+        default: break;
     }
+    return (ExecutableDir() / "shaders" / subDir).string() + "/";
 }
 
 std::string GetShaderExtension(GraphicsBackend backend) {
