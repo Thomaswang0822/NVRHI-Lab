@@ -2,7 +2,7 @@
 
 This document outlines the incremental implementation path from a minimal triangle to a fully interactive graphics testbed.
 
-**Current Status**: Phase 2 in progress (v0.1.8). Steps 2.1–2.3 complete on all backends; interactive god-mode fly camera added.
+**Current Status**: Phase 2 in progress (v0.1.9). Steps 1–4 complete (math, camera + fly controls, constant buffers, scene manager system); window resize handling remaining.
 
 ---
 
@@ -81,27 +81,14 @@ Verify at the moment the feature lands: each new layer built on an unverified la
    - Binding layout setup
    - **Acceptance check** (covered by 2.2's orbit): camera constants are re-uploaded every frame; a stale or broken buffer freezes/corrupts the orbiting view
 
-4. Scene Object Base Class (`src/graphics/scene_object.h/cpp`)
-   - Virtual `render()` method
-   - Common resource management
-   - **Acceptance check**: wall and target both draw through the same virtual render() path (verified together in 2.5–2.7)
+4. Scene Manager System ✅ (`src/graphics/scene_manager.h/cpp`)
+   - Classic renderer shape: **scene = loader + storage** — no per-object-type classes, no per-object shaders
+   - Generic `Mesh` (VB/IB/count) + `Material` (pure data: base color, lit/unlit, grid) + `SceneObject` POD (mesh index, material, transform); geometry from `geometry.h/cpp` (`MakeGridWall`/`MakeCube` today, file parser later — same interface)
+   - ONE pipeline and ONE VS/PS pair for the whole scene; per-draw `ObjectConstants` (ModelMatrix + BaseColor + lighting/grid flags) at b1 beside camera b0; back-face culling deliberate (wrong winding = missing face, tier-1 visible)
+   - Frontend: grid wall + lit cube; test triangle deleted
+   - **Acceptance check** ✅ implemented (tier 1): fly the god camera — grid wall behind lit cube, depth ordering and culling correct from every angle; tier-3 `--frameNum=300` Vulkan run clean
 
-5. Background Wall (`src/graphics/background_wall.h/cpp`)
-   - Quad geometry with index buffer
-   - Simple unlit shader
-   - **Acceptance check**: quad fills the view behind the target as the camera orbits (index buffer + winding correct)
-
-6. Simple Target (`src/graphics/target.h/cpp`)
-   - Cube geometry
-   - Basic lit shader
-   - **Acceptance check**: lit cube looks right from all orbit angles (lighting direction sane, culling correct)
-
-7. Scene Manager (`src/graphics/scene_manager.h/cpp`)
-   - Orchestrates all scene objects
-   - Manages shared resources (camera, depth buffer)
-   - **Acceptance check**: wall + cube together in one scene; depth ordering stays correct from every orbit angle
-
-8. Window Resize Handling
+5. Window Resize Handling
    - Swapchain recreation + depth buffer resize + camera aspect ratio update (no resize path exists today; version-log 0.1.5 claim was stale)
    - **Acceptance check**: drag the window edge — image follows without distortion or crash (tier 1)
 
@@ -109,10 +96,10 @@ Verify at the moment the feature lands: each new layer built on an unverified la
 
 **NVRHI Concepts Learned**:
 
-- Constant buffers (常量缓冲区)
-- Index buffers (索引缓冲区)
-- Resource bindings and binding layouts
-- Textures and samplers (optional)
+- Constant buffers (常量缓冲区): camera (b0, shared) + per-object ModelMatrix (b1)
+- Index buffers (索引缓冲区) and drawIndexed
+- Resource bindings and binding layouts (multi-slot binding sets)
+- Deliberate back-face culling and winding order
 
 ---
 

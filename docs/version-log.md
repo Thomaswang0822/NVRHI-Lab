@@ -97,5 +97,21 @@ Phase 2: Interactive God-Mode Fly Camera + Backend Y-Flip Normalization
 - New `CameraController` (`src/graphics/camera_controller.h/cpp`): god-mode free-fly camera, fully self-centered with zero coupling to scene objects — **W/S/A/D** move along camera-local axes (strafe always horizontal), **R/F** world-vertical crane movement, **arrow keys** look (yaw/pitch, pitch clamped to ±89°), **Q/E** turn in place around the camera's own vertical axis (CCW/CW from above); diagonal movement normalized; control hint shown in the status bar. Serves as the camera system's tier-1 acceptance check: any matrix/attitude error is observable the moment a key is pressed
 - Semantic `CameraInput` bitmask decouples the graphics layer from wxWidgets; the frontend polls physical key state each frame via `wxGetKeyState` (macOS: CGEventSourceKeyState / Windows: GetAsyncKeyState) — focus-independent; key bindings live in one table
 - Normalized D3D vs Vulkan NDC Y direction: `Camera::SetFlipY()` negates projection Y for Vulkan (D3D +Y up, Vulkan +Y down) so both backends render identically; init-time NDC sanity log projects the triangle's top vertex through the VP matrix — (0, ±0.40, 0.97) matches hand calculation
-- Fixed: NVRHI rasterizer defaults to back-face culling — now explicit `setCullNone()` until Phase 2.6 (winding) re-enables it deliberately
-- Documented window resize handling as new Phase 2 task 8 (swapchain recreation + aspect update; no resize path exists today — 0.1.5 claim was stale)
+- Fixed: NVRHI rasterizer defaults to back-face culling — now explicit `setCullNone()` until real geometry re-enables it deliberately (winding)
+- Documented window resize handling as new Phase 2 task 5 (swapchain recreation + aspect update; no resize path exists today — 0.1.5 claim was stale)
+
+## 0.1.9
+
+Phase 2: Scene System (generic mesh/material pipeline; wall + target replace the test triangle)
+
+- Architecture follows the classic renderer shape — **scene = loader + storage**, no per-object-type C++ classes and no per-object shaders
+- New `Mesh` (`src/graphics/mesh.h/cpp`): generic vertex/index buffer pair + index count; geometry comes from `GeometryData` (`geometry.h/cpp`) produced by procedural functions today (`MakeGridWall`, `MakeCube`) — swappable for a file parser (.obj / scene description) later without touching the render path
+- New `Material` (`src/graphics/material.h`): pure data (base color, lit/unlit, grid overlay) — one pipeline serves the whole scene, all variation flows through constants
+- `SceneObject` (`scene_manager.h`): POD `{ mesh index, material, transform }` — no inheritance, no virtual functions
+- `SceneManager`: single VS/PS pair (`object.vs/ps.hlsl`), single pipeline, single binding set (b0 camera + b1 object); per draw: write `ObjectConstants` then `drawIndexed` — transform + material in one buffer, the pattern Phase 3 needs for per-target transforms
+- `ObjectConstants` (b1) = ModelMatrix + BaseColor + LightingMode + GridEnabled; binding visibility extended to Vertex|Pixel (PS now reads material params)
+- Wall: 20×12 quad at z=+5, unlit + calibration grid using **fixed world-space line width** (first attempt used `fwidth` AA lines on a near-black background — rendered effectively invisible on MoltenVK)
+- Target: unit cube, Lambert + ambient; back-face culling deliberate (wrong winding = missing face, tier-1 visible)
+- Deleted: SceneObject virtual base class, BackgroundWall/Target classes, per-object wall/target shader pairs, triangle shaders; shader loading lives in shared `shader_utils.h/cpp`
+- Wall visibility fix (round 2): **front-face winding on Vulkan** — `Camera::SetFlipY` negates the projection's Y, which mirrors the whole scene and reverses every triangle's winding; with `cullBack` that culled *front* faces (wall fully invisible, cube showed its inner faces). Fixed with `setFrontCounterClockwise(true)` on Vulkan, matching the mirrored projection. Round 1 had also replaced `fwidth`-based AA grid lines (zero-width on MoltenVK) with fixed world-space line width
+- Acceptance check: tier 3 — `--frameNum=300` Vulkan run clean (validation silent, NDC sanity log unchanged); tier 1 — fly the god camera: grid wall behind lit cube, depth ordering and culling correct from every angle

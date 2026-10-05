@@ -1,0 +1,43 @@
+#include "shaders_shared/object_cbuffer.hlsli"
+
+// 全场景唯一的像素着色器：材质差异（BaseColor / 光照开关 / 网格叠加）
+// 全部来自 ObjectConstants，没有按物体类型区分的 shader
+
+struct PSInput
+{
+    float4 position : SV_Position;
+    float3 worldPos : WORLD_POS;
+    float3 normal   : WORLD_NORMAL;
+};
+
+// 固定世界宽度的网格线（不用导数，任何后端都稳定可见）
+float GridMask(float coord, float spacing, float halfWidth)
+{
+    // 到最近 spacing 倍数的距离
+    float dist = abs(frac(coord / spacing + 0.5) - 0.5) * spacing;
+    return step(dist, halfWidth);  // dist <= halfWidth → 1
+}
+
+float4 main(PSInput input) : SV_Target0
+{
+    float3 color = BaseColor.rgb;
+
+    if (LightingMode > 0.5)
+    {
+        // Lambert：来自相机侧上方的方向光 + 环境项（暗面仍可见）
+        float3 N = normalize(input.normal);
+        float3 L = normalize(float3(-0.5, 1.0, -0.6));
+        float diffuse = max(dot(N, L), 0.0);
+        color *= (0.35 + 0.65 * diffuse);
+    }
+
+    if (GridEnabled > 0.5)
+    {
+        float minor = max(GridMask(input.worldPos.x, 1.0, 0.012), GridMask(input.worldPos.y, 1.0, 0.012));
+        float major = max(GridMask(input.worldPos.x, 5.0, 0.028), GridMask(input.worldPos.y, 5.0, 0.028));
+        color = lerp(color, float3(0.32, 0.38, 0.48), minor);
+        color = lerp(color, float3(0.55, 0.65, 0.78), major);
+    }
+
+    return float4(color, 1.0);
+}

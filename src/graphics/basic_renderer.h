@@ -3,15 +3,20 @@
 #include <nvrhi/nvrhi.h>
 #include <chrono>
 #include <cstdint>
+#include <memory>
 #include "camera.h"
 #include "camera_controller.h"
 #include "constant_buffer.h"
 #include "camera_constants.h"
+#include "scene_manager.h"
 
 namespace nvrhi_lab {
 
 class DeviceManager;
 
+// 帧级编排：相机（+输入）、相机常量缓冲、深度缓冲、framebuffer、
+// command list、清屏与 present。场景物体（墙/靶子等）由 SceneManager
+// 管理并绘制——renderer 不再持有任何具体几何体
 class BasicRenderer {
 public:
     BasicRenderer();
@@ -37,13 +42,7 @@ private:
     std::chrono::steady_clock::time_point m_LastFrameTime;
     uint32_t m_CameraInputMask = InputNone;
 
-    nvrhi::ShaderHandle m_VertexShader;
-    nvrhi::ShaderHandle m_PixelShader;
-    nvrhi::GraphicsPipelineHandle m_Pipeline;
-    nvrhi::BindingLayoutHandle m_BindingLayout;
-    nvrhi::BindingSetHandle m_BindingSet;
-    nvrhi::BufferHandle m_VertexBuffer;
-    nvrhi::VertexBufferBinding m_vertexBufferBinding;
+    std::unique_ptr<SceneManager> m_Scene;
     nvrhi::TextureHandle m_DepthBuffer;
     nvrhi::CommandListHandle m_CommandList;
 };

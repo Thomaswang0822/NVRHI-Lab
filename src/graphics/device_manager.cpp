@@ -60,6 +60,14 @@ bool DeviceManager::Initialize(const DeviceManagerDesc& desc, void* windowHandle
         case GraphicsBackend::D3D11:
             m_Platform = std::make_unique<D3D11Context>();
             break;
+#else
+        // D3D backends are Windows-only. List them explicitly (instead of
+        // hiding the cases inside the #ifdef) so the switch stays exhaustive
+        // for -Wswitch; m_Platform stays null and the check below reports
+        // the backend as unavailable.
+        case GraphicsBackend::D3D11:
+        case GraphicsBackend::D3D12:
+            break;
 #endif
         case GraphicsBackend::Vulkan:
             m_Platform = std::make_unique<VulkanContext>();
