@@ -56,6 +56,9 @@ void Camera::UpdateMatrices() {
 
     m_ViewMatrix = glm::lookAt(m_Position, m_Target, m_Up);
     m_ProjectionMatrix = glm::perspective(m_FovY, m_Aspect, m_NearZ, m_FarZ);
+    if (m_FlipY) {
+        m_ProjectionMatrix[1][1] *= -1.0f;  // see SetFlipY
+    }
     m_ViewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
 
     m_Dirty = false;

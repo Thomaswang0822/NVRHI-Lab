@@ -1,8 +1,37 @@
 #include "my_app.h"
 #include "../graphics/device_manager.h"
 #include "../graphics/basic_renderer.h"
+#include "../graphics/camera_controller.h"
 
 #include <wx/msgdlg.h>
+
+namespace {
+
+// 按键绑定表：物理键 → 语义化相机输入位。改键位只需改这张表。
+// 注意用 wxGetKeyState 每帧轮询物理键状态（macOS: CGEventSourceKeyState,
+// Windows: GetAsyncKeyState），与窗口焦点无关——wx 的 KEY_DOWN/KEY_UP
+// 事件只发给持有焦点的窗口，macOS 上 frame 拿不到焦点时事件会静默丢失
+struct KeyBinding {
+    wxKeyCode key;
+    uint32_t input;
+};
+
+constexpr KeyBinding kCameraKeys[] = {
+    { static_cast<wxKeyCode>('W'), nvrhi_lab::MoveForward },
+    { static_cast<wxKeyCode>('S'), nvrhi_lab::MoveBack    },
+    { static_cast<wxKeyCode>('A'), nvrhi_lab::MoveLeft    },
+    { static_cast<wxKeyCode>('D'), nvrhi_lab::MoveRight   },
+    { static_cast<wxKeyCode>('R'), nvrhi_lab::MoveUp      },
+    { static_cast<wxKeyCode>('F'), nvrhi_lab::MoveDown    },
+    { WXK_LEFT,                    nvrhi_lab::LookLeft    },
+    { WXK_RIGHT,                   nvrhi_lab::LookRight   },
+    { WXK_UP,                      nvrhi_lab::LookUp      },
+    { WXK_DOWN,                    nvrhi_lab::LookDown    },
+    { static_cast<wxKeyCode>('Q'), nvrhi_lab::TurnCCW    },
+    { static_cast<wxKeyCode>('E'), nvrhi_lab::TurnCW     },
+};
+
+} // anonymous namespace
 
 bool MyApp::OnInit() {
 #ifdef _WIN32
@@ -89,13 +118,10 @@ bool MyApp::OnInit() {
     // Pass device manager to frame
     frame->SetDeviceManager(m_DeviceManager.get());
     
-    // Show success message
+    // Show success message + camera controls hint
     wxString msg;
-    msg.Printf("Successfully initialized NVRHI with %s backend!\nResolution: %dx%d\nBackbuffers: %d",
-               m_DeviceManager->GetBackendName(),
-               m_DeviceManager->GetWidth(),
-               m_DeviceManager->GetHeight(),
-               m_DeviceManager->GetBackBufferCount());
+    msg.Printf("%s | WASD/RF move, arrows look, Q/E turn",
+               m_DeviceManager->GetBackendName());
     frame->SetStatusText(msg);
     
     // Create and initialize BasicRenderer
@@ -178,14 +204,26 @@ void MyFrame::OnHello(wxCommandEvent& event) {
     }
 }
 
+uint32_t MyFrame::BuildCameraInput() const {
+    uint32_t mask = nvrhi_lab::InputNone;
+    for (const auto& binding : kCameraKeys) {
+        if (wxGetKeyState(binding.key)) {
+            mask |= binding.input;
+        }
+    }
+    return mask;
+}
+
 void MyFrame::OnRenderTimer(wxTimerEvent& event) {
     if (m_DeviceManager && m_Renderer) {
+        m_Renderer->SetCameraInput(BuildCameraInput());
+
         m_DeviceManager->BeginFrame();
         m_Renderer->Render();
         m_DeviceManager->Present();
-        
+
         m_FrameCount++;
-        
+
         if (m_MaxFrames > 0 && m_FrameCount >= m_MaxFrames) {
             m_RenderTimer.Stop();
             Close(true);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <wx/wx.h>
+#include <cstdint>
 #include <memory>
 
 namespace nvrhi_lab {
@@ -30,6 +31,7 @@ private:
     void OnExit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
     void OnRenderTimer(wxTimerEvent& event);
+    uint32_t BuildCameraInput() const;
 
     nvrhi_lab::DeviceManager* m_DeviceManager = nullptr;
     nvrhi_lab::BasicRenderer* m_Renderer = nullptr;

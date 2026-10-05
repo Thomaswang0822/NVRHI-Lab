@@ -1,7 +1,10 @@
 #pragma once
 
 #include <nvrhi/nvrhi.h>
+#include <chrono>
+#include <cstdint>
 #include "camera.h"
+#include "camera_controller.h"
 #include "constant_buffer.h"
 #include "camera_constants.h"
 
@@ -18,6 +21,10 @@ public:
     void Shutdown();
     void Render();
 
+    // 前端每帧把语义化按键状态（CameraInput 位掩码）喂进来，由
+    // CameraController 在 Render 时消费
+    void SetCameraInput(uint32_t inputMask) { m_CameraInputMask = inputMask; }
+
     bool IsInitialized() const { return m_Initialized; }
 
 private:
@@ -25,7 +32,10 @@ private:
     bool m_Initialized = false;
 
     Camera m_Camera;
+    CameraController m_CameraController;
     ConstantBuffer<CameraConstants> m_CameraCB;
+    std::chrono::steady_clock::time_point m_LastFrameTime;
+    uint32_t m_CameraInputMask = InputNone;
 
     nvrhi::ShaderHandle m_VertexShader;
     nvrhi::ShaderHandle m_PixelShader;

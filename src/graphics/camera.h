@@ -16,6 +16,10 @@ public:
     void SetPerspective(float fovY, float aspect, float nearZ, float farZ);
     void SetAspectRatio(float aspect) { m_Aspect = aspect; m_Dirty = true; }
 
+    // Vulkan NDC +Y points down the screen, D3D +Y points up. Flipping the
+    // projection's Y keeps the image identical across backends.
+    void SetFlipY(bool flip) { m_FlipY = flip; m_Dirty = true; }
+
     const glm::vec3& GetPosition() const { return m_Position; }
     const glm::vec3& GetTarget() const { return m_Target; }
     const glm::vec3& GetUp() const { return m_Up; }
@@ -39,6 +43,7 @@ private:
     float m_Aspect = 16.0f / 9.0f;
     float m_NearZ = 0.1f;
     float m_FarZ = 100.0f;
+    bool m_FlipY = false;
 
     glm::mat4 m_ViewMatrix{1.0f};
     glm::mat4 m_ProjectionMatrix{1.0f};

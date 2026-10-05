@@ -2,7 +2,7 @@
 
 ## 0.1.0
 
-A minimal but runnable app with wxWidgets GUI. 
+A minimal but runnable app with wxWidgets GUI.
 
 - NVRHI has been added via CMake but not used in app.
 - Design and implementation roadmap have been decided.
@@ -88,3 +88,14 @@ Phase 2: Camera System & Constant Buffer Infrastructure
 - Added --frameNum=N command line option for automated testing
 - Fixed Vulkan binding offset mismatch: NVRHI defaults constantBuffer=256, DXC maps register(b0) to binding 0
 - **All three backends (D3D11, D3D12, Vulkan) working with camera transformation**
+
+## 0.1.8
+
+Phase 2: Interactive God-Mode Fly Camera + Backend Y-Flip Normalization
+
+- Added **Verification Rule** to implementation-phases.md: every task ships with an acceptance check (interactive / scripted animation / automated); no check = not done
+- New `CameraController` (`src/graphics/camera_controller.h/cpp`): god-mode free-fly camera, fully self-centered with zero coupling to scene objects — **W/S/A/D** move along camera-local axes (strafe always horizontal), **R/F** world-vertical crane movement, **arrow keys** look (yaw/pitch, pitch clamped to ±89°), **Q/E** turn in place around the camera's own vertical axis (CCW/CW from above); diagonal movement normalized; control hint shown in the status bar. Serves as the camera system's tier-1 acceptance check: any matrix/attitude error is observable the moment a key is pressed
+- Semantic `CameraInput` bitmask decouples the graphics layer from wxWidgets; the frontend polls physical key state each frame via `wxGetKeyState` (macOS: CGEventSourceKeyState / Windows: GetAsyncKeyState) — focus-independent; key bindings live in one table
+- Normalized D3D vs Vulkan NDC Y direction: `Camera::SetFlipY()` negates projection Y for Vulkan (D3D +Y up, Vulkan +Y down) so both backends render identically; init-time NDC sanity log projects the triangle's top vertex through the VP matrix — (0, ±0.40, 0.97) matches hand calculation
+- Fixed: NVRHI rasterizer defaults to back-face culling — now explicit `setCullNone()` until Phase 2.6 (winding) re-enables it deliberately
+- Documented window resize handling as new Phase 2 task 8 (swapchain recreation + aspect update; no resize path exists today — 0.1.5 claim was stale)
