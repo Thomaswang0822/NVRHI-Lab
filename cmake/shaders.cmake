@@ -143,7 +143,9 @@ function(_configure_shader_d3d12 SHADER_PATH SHADER_TYPE_NAME)
         VS_SHADER_MODEL ${SHADER_MODEL_D3D12}
         VS_SHADER_ENTRYPOINT ${SHADER_ENTRYPOINT}
         VS_SHADER_ENABLE_DEBUG "$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>"
-        VS_SHADER_OBJECT_FILE_NAME "shaders/d3d12/${NAME}.cso"
+        # 绝对路径：与其他 backend 一致输出到 bin/shaders/d3d12/（运行时按
+        # exe 相对路径查找；相对路径会落到 build/shaders/ 下，exe 找不到）
+        VS_SHADER_OBJECT_FILE_NAME "${CMAKE_SOURCE_DIR}/bin/shaders/d3d12/${NAME}.cso"
     )
 endfunction()
 

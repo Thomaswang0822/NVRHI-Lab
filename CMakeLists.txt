@@ -12,12 +12,39 @@ endif()
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+# VS 等多配置生成器会在 RUNTIME 目录后追加 $<CONFIG> 子目录（exe 落在
+# bin/Debug/），破坏 "exe 与 bin/shaders 同目录树" 的运行时布局（macOS
+# 单配置生成器无此问题）。逐配置固定到 bin/，保证按 exe 相对路径查找
+# shader 在所有平台一致。代价：Debug/Release 构建互相覆盖 bin/NVRHI-Lab.exe
+foreach(_cfg DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${_cfg} ${CMAKE_SOURCE_DIR}/bin)
+endforeach()
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 add_compile_definitions(NOMINMAX)
 
 include(FetchContent)
+
+# 网络防御（重要）：gh-proxy 的 git-over-HTTPS 连接经常在 TCP/TLS 层无限期
+# 挂死，而 FetchContent 的 git 调用没有低速超时，一旦触发 fetch/download 就
+# 卡死整个 configure。两层防护：
+#   1) UPDATE_DISCONNECTED —— 有 stamp 的依赖（wx/NVRHI/GLM 顶层声明）跳过
+#      每次 configure 的 update fetch
+#   2) SOURCE_DIR 覆盖 —— vulkan_headers / directx_headers / glm：只要 _deps
+#      里已有完整源码（CMakeLists.txt 存在即视为完整），直接覆盖 SOURCE_DIR，
+#      完全绕过 git download/update/patch（FULLY_DISCONNECTED 在部分 CMake
+#      版本对空目录静默跳过，不可靠，故不用）。源码缺失（如全新 clone）则
+#      不覆盖，走正常在线拉取。刷新依赖：网络畅通时删掉对应
+#      build/_deps/<name>-src 再 configure，或手动 clone 到位（tag 要匹配）
+set(FETCHCONTENT_UPDATE_DISCONNECTED ON)
+foreach(dep vulkan_headers directx_headers glm)
+    if(EXISTS "${CMAKE_BINARY_DIR}/_deps/${dep}-src/CMakeLists.txt")
+        string(TOUPPER ${dep} DEP_UPPER)
+        set(FETCHCONTENT_SOURCE_DIR_${DEP_UPPER} "${CMAKE_BINARY_DIR}/_deps/${dep}-src")
+        message(STATUS "FetchContent: ${dep} using existing _deps/${dep}-src (offline)")
+    endif()
+endforeach()
 
 # wxWidgets：rolling，跟踪 master tip（首次 populate 时解析）。
 # UPDATE_DISCONNECTED：跳过每次 configure 的 update step——branch 类 GIT_TAG

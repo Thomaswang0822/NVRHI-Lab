@@ -35,34 +35,27 @@ $msbuild = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.e
 
 ## Run Commands
 
-### CRITICAL: Working Directory
-**The app MUST be run from `build/` directory**, not project root or `bin/Debug/`.
+### Working Directory
+**Any working directory works.** The app locates shaders relative to the executable (`bin/NVRHI-Lab.exe` looks in `bin/shaders/<backend>/`), not CWD.
 
-Why: Shaders are compiled to `build/shaders/` and the app looks for `shaders/` relative to working directory.
+Exe lives at `bin/NVRHI-Lab.exe` (all build configs — Debug/Release overwrite each other).
 
 ### Basic Run (Single Backend)
 ```powershell
-# From build/ directory
-Push-Location build
-& ..\bin\Debug\NVRHI-Lab.exe --backend=d3d12
-Pop-Location
+& bin\NVRHI-Lab.exe --backend=d3d12
 ```
 
 ### Run with Frame Limit (Automated Testing)
 ```powershell
 # Exit after N frames - useful for automated testing
-Push-Location build
-& ..\bin\Debug\NVRHI-Lab.exe --backend=vulkan --frameNum=10 2>&1
-Pop-Location
+& bin\NVRHI-Lab.exe --backend=vulkan --frameNum=10 2>&1
 ```
 
 ### Test All Backends
 ```powershell
-Push-Location build
-& ..\bin\Debug\NVRHI-Lab.exe --backend=d3d11 --frameNum=5 2>&1
-& ..\bin\Debug\NVRHI-Lab.exe --backend=d3d12 --frameNum=5 2>&1
-& ..\bin\Debug\NVRHI-Lab.exe --backend=vulkan --frameNum=5 2>&1
-Pop-Location
+& bin\NVRHI-Lab.exe --backend=d3d11 --frameNum=5 2>&1
+& bin\NVRHI-Lab.exe --backend=d3d12 --frameNum=5 2>&1
+& bin\NVRHI-Lab.exe --backend=vulkan --frameNum=5 2>&1
 ```
 
 ## Error Checking
@@ -77,7 +70,7 @@ Pop-Location
 ### Runtime Errors
 Watch for `[Error]` prefix in output:
 - `Cannot create a binding layout with visibility = None` → Add `.setVisibility(nvrhi::ShaderType::Vertex)`
-- `Shader file not found` → Check shader compilation output in `build/shaders/`
+- `Shader file not found` → Check shader compilation output in `bin/shaders/`
 - Vulkan validation errors → Check descriptor set bindings
 
 ### Exit Codes
@@ -101,6 +94,6 @@ Watch for `[Error]` prefix in output:
 
 - **Why MSBuild instead of `cmake --build`**: Consistency with Visual Studio workflow
 - **Why not VS "Rebuild All"**: Race condition with CMake custom build steps causes `error MSB8066`
-- **Working directory**: **MUST be `build/`** - shaders are at `build/shaders/`
+- **Working directory**: Any - shaders are located relative to the exe (`bin/shaders/`)
 - **Logging**: All errors go to stderr (non-blocking, no popup dialogs)
 - **Exit codes**: 0 = success, non-zero = failure
