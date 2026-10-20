@@ -1,7 +1,7 @@
 #ifndef OBJECT_CBUFFER_HLSLI
 #define OBJECT_CBUFFER_HLSLI
 
-// Per-object constants (b1) — CPU struct mirrored in
+// Per-object constants (b1) - CPU struct mirrored in
 // src/graphics/object_constants.h
 cbuffer ObjectConstants : register(b1)
 {

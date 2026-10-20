@@ -6,7 +6,7 @@ namespace nvrhi_lab {
 
 // Per-object shader constants (b1)。GPU layout mirrored in
 // src/shaders/shaders_shared/object_cbuffer.hlsli。
-// 每帧每个 draw 更新一次：变换 + 材质参数一起走这一个缓冲
+// 每物体一个缓冲：变换 + 材质在场景加载时写入一次（内容静态）
 struct ObjectConstants {
     glm::mat4 ModelMatrix{1.0f};
     glm::vec4 BaseColor{1.0f};

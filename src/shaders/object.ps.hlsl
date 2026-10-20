@@ -1,7 +1,7 @@
 #include "shaders_shared/object_cbuffer.hlsli"
 
-// 全场景唯一的像素着色器：材质差异（BaseColor / 光照开关 / 网格叠加）
-// 全部来自 ObjectConstants，没有按物体类型区分的 shader
+// The scene's single pixel shader: material variation (BaseColor / lighting
+// toggle / grid overlay) all comes from ObjectConstants - no per-object-type shaders.
 
 struct PSInput
 {
@@ -10,12 +10,12 @@ struct PSInput
     float3 normal   : WORLD_NORMAL;
 };
 
-// 固定世界宽度的网格线（不用导数，任何后端都稳定可见）
+// Grid lines with fixed world-space width (no derivatives; stable on every backend)
 float GridMask(float coord, float spacing, float halfWidth)
 {
-    // 到最近 spacing 倍数的距离
+    // distance to the nearest multiple of spacing
     float dist = abs(frac(coord / spacing + 0.5) - 0.5) * spacing;
-    return step(dist, halfWidth);  // dist <= halfWidth → 1
+    return step(dist, halfWidth);  // dist <= halfWidth -> 1
 }
 
 float4 main(PSInput input) : SV_Target0
@@ -24,7 +24,8 @@ float4 main(PSInput input) : SV_Target0
 
     if (LightingMode > 0.5)
     {
-        // Lambert：来自相机侧上方的方向光 + 环境项（暗面仍可见）
+        // Lambert: directional light from the upper camera side + ambient
+        // (the dark side stays visible)
         float3 N = normalize(input.normal);
         float3 L = normalize(float3(-0.5, 1.0, -0.6));
         float diffuse = max(dot(N, L), 0.0);
