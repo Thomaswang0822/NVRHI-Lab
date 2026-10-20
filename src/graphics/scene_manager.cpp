@@ -25,7 +25,8 @@ bool SceneManager::Create(nvrhi::IDevice* device, nvrhi::BufferHandle cameraBuff
 
 bool SceneManager::CreatePipeline(nvrhi::IDevice* device, GraphicsBackend backend,
                                   nvrhi::Format colorFormat) {
-    // 共享绑定布局：b0 = 相机（VS 用），b1 = 物体（VS 用矩阵、PS 用材质）。
+    // 共享绑定布局：b0 = 相机（VS 用），b1 = 物体常量数组（VS 用矩阵、
+    // PS 用材质），b2 = push constants 传当前 draw 的数组下标。
     // Vulkan 下 binding offset 归零以匹配 DXC 的 register→binding 映射
     m_BindingLayout = device->createBindingLayout(
         nvrhi::BindingLayoutDesc()
@@ -36,7 +37,8 @@ bool SceneManager::CreatePipeline(nvrhi::IDevice* device, GraphicsBackend backen
                 .setSamplerOffset(0)
                 .setUnorderedAccessViewOffset(0))
             .addItem(nvrhi::BindingLayoutItem::ConstantBuffer(0))
-            .addItem(nvrhi::BindingLayoutItem::ConstantBuffer(1)));
+            .addItem(nvrhi::BindingLayoutItem::ConstantBuffer(1))
+            .addItem(nvrhi::BindingLayoutItem::PushConstants(2, sizeof(uint32_t))));
     if (!m_BindingLayout) {
         LogError("SceneManager: failed to create binding layout");
         return false;
@@ -136,50 +138,47 @@ bool SceneManager::LoadDefaultScene(nvrhi::IDevice* device) {
 }
 
 bool SceneManager::CreateObjectResources(nvrhi::IDevice* device, nvrhi::BufferHandle cameraBuffer) {
-    // 每物体一个非 volatile CB + 一个 binding set（b0 = 共享相机缓冲，
-    // b1 = 该物体自己的 CB）。物体常量是静态的：加载时一次性写入，
-    // 渲染循环里只绑定、不更新——不依赖"同帧 draw 之间更新共享 CB"
-    // 这类任何后端上的微妙时序
-    m_ObjectCBs.reserve(m_Objects.size());
-    m_ObjectBindingSets.reserve(m_Objects.size());
-
-    for (size_t i = 0; i < m_Objects.size(); i++) {
-        std::string debugName = "ObjectConstantBuffer." + std::to_string(i);
-
-        ConstantBuffer<ObjectConstants> cb;
-        if (!cb.Create(device, debugName.c_str())) {
-            LogError("SceneManager: failed to create object constant buffer");
-            return false;
-        }
-        m_ObjectCBs.push_back(std::move(cb));
-
-        m_ObjectBindingSets.push_back(device->createBindingSet(
-            nvrhi::BindingSetDesc()
-                .addItem(nvrhi::BindingSetItem::ConstantBuffer(0, cameraBuffer))
-                .addItem(nvrhi::BindingSetItem::ConstantBuffer(1, m_ObjectCBs.back().GetBuffer())),
-            m_BindingLayout));
-        if (!m_ObjectBindingSets.back()) {
-            LogError("SceneManager: failed to create binding set");
-            return false;
-        }
+    // 标准做法：所有物体常量装进一个共享数组 CB（b1，一次创建、
+    // 加载时一次性写入）；每个 draw 用 push constants（b2）传自己的
+    // 数组下标——push 值随命令流内联提交，不存在共享内存时序问题
+    if (m_Objects.empty() || m_Objects.size() > ObjectConstantsArray::MaxObjects) {
+        LogError("SceneManager: object count exceeds the constant array capacity");
+        return false;
     }
 
-    // 一次性写入所有物体常量（独立 command list 立即执行，模式同 Mesh::Create）
+    if (!m_ObjectCB.Create(device, "ObjectConstantArray")) {
+        LogError("SceneManager: failed to create object constant buffer");
+        return false;
+    }
+
+    m_BindingSet = device->createBindingSet(
+        nvrhi::BindingSetDesc()
+            .addItem(nvrhi::BindingSetItem::ConstantBuffer(0, cameraBuffer))
+            .addItem(nvrhi::BindingSetItem::ConstantBuffer(1, m_ObjectCB.GetBuffer()))
+            .addItem(nvrhi::BindingSetItem::PushConstants(2, sizeof(uint32_t))),
+        m_BindingLayout);
+    if (!m_BindingSet) {
+        LogError("SceneManager: failed to create binding set");
+        return false;
+    }
+
+    // 打包整块常量数组，一次性写入（独立 command list 立即执行，模式同 Mesh::Create）
+    ObjectConstantsArray array;
+    for (size_t i = 0; i < m_Objects.size(); i++) {
+        const SceneObject& object = m_Objects[i];
+        array.Objects[i].ModelMatrix = object.transform;
+        array.Objects[i].BaseColor = glm::vec4(object.material.baseColor, 1.0f);
+        array.Objects[i].LightingMode = object.material.lit ? 1.0f : 0.0f;
+        array.Objects[i].GridEnabled = object.material.grid ? 1.0f : 0.0f;
+    }
+
     nvrhi::CommandListHandle commandList = device->createCommandList();
     if (!commandList) {
         LogError("SceneManager: failed to create upload command list");
         return false;
     }
     commandList->open();
-    for (size_t i = 0; i < m_Objects.size(); i++) {
-        const SceneObject& object = m_Objects[i];
-        ObjectConstants constants;
-        constants.ModelMatrix = object.transform;
-        constants.BaseColor = glm::vec4(object.material.baseColor, 1.0f);
-        constants.LightingMode = object.material.lit ? 1.0f : 0.0f;
-        constants.GridEnabled = object.material.grid ? 1.0f : 0.0f;
-        m_ObjectCBs[i].Update(commandList, constants);
-    }
+    m_ObjectCB.Update(commandList, array);
     commandList->close();
     device->executeCommandList(commandList);
 
@@ -187,17 +186,18 @@ bool SceneManager::CreateObjectResources(nvrhi::IDevice* device, nvrhi::BufferHa
 }
 
 void SceneManager::Render(nvrhi::ICommandList* commandList, const nvrhi::GraphicsState& baseState) {
-    for (size_t i = 0; i < m_Objects.size(); i++) {
+    for (uint32_t i = 0; i < m_Objects.size(); i++) {
         const Mesh& mesh = m_Meshes[m_Objects[i].meshIndex];
 
-        // 常量已在加载时写入各自的 CB，这里只绑定 + 绘制
+        // 常量数组加载时已写好；这里只提交本 draw 的下标（内联）+ 绑定 + 绘制
         nvrhi::GraphicsState state = baseState;
         state.setPipeline(m_Pipeline)
              .addVertexBuffer(nvrhi::VertexBufferBinding(mesh.GetVertexBuffer(), 0, 0))
              .setIndexBuffer(nvrhi::IndexBufferBinding(mesh.GetIndexBuffer(), nvrhi::Format::R32_UINT, 0))
-             .addBindingSet(m_ObjectBindingSets[i]);
+             .addBindingSet(m_BindingSet);
 
         commandList->setGraphicsState(state);
+        commandList->setPushConstants(&i, sizeof(uint32_t));
 
         nvrhi::DrawArguments args;
         args.setVertexCount(mesh.GetIndexCount());
@@ -207,9 +207,8 @@ void SceneManager::Render(nvrhi::ICommandList* commandList, const nvrhi::Graphic
 
 void SceneManager::Shutdown() {
     m_Objects.clear();
-    m_ObjectBindingSets.clear();
-    m_ObjectCBs.clear();
     m_Meshes.clear();
+    m_BindingSet = nullptr;
     m_Pipeline = nullptr;
     m_PixelShader = nullptr;
     m_VertexShader = nullptr;

@@ -1,7 +1,8 @@
 #include "shaders_shared/object_cbuffer.hlsli"
 
 // The scene's single pixel shader: material variation (BaseColor / lighting
-// toggle / grid overlay) all comes from ObjectConstants - no per-object-type shaders.
+// toggle / grid overlay) all comes from the shared constants array, selected
+// by the push-constant object index - no per-object-type shaders.
 
 struct PSInput
 {
@@ -20,9 +21,10 @@ float GridMask(float coord, float spacing, float halfWidth)
 
 float4 main(PSInput input) : SV_Target0
 {
-    float3 color = BaseColor.rgb;
+    ObjectConstants obj = g_Objects[g_ObjectIndex];
+    float3 color = obj.BaseColor.rgb;
 
-    if (LightingMode > 0.5)
+    if (obj.LightingMode > 0.5)
     {
         // Lambert: directional light from the upper camera side + ambient
         // (the dark side stays visible)
@@ -32,7 +34,7 @@ float4 main(PSInput input) : SV_Target0
         color *= (0.35 + 0.65 * diffuse);
     }
 
-    if (GridEnabled > 0.5)
+    if (obj.GridEnabled > 0.5)
     {
         float minor = max(GridMask(input.worldPos.x, 1.0, 0.012), GridMask(input.worldPos.y, 1.0, 0.012));
         float major = max(GridMask(input.worldPos.x, 5.0, 0.028), GridMask(input.worldPos.y, 5.0, 0.028));

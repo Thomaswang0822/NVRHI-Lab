@@ -196,6 +196,10 @@ function(_compile_shader_vulkan SHADER_PATH SHADER_TYPE_SUFFIX)
             -T ${TARGET}
             -E ${SHADER_ENTRYPOINT}
             -spirv
+            # SPIR-V-only declarations ([[vk::push_constant]] etc.) are guarded
+            # by #ifdef SPIRV in shader sources; dxc does NOT define this macro
+            # automatically in -spirv mode
+            -DSPIRV=1
             -Zi
             -Od
             -fspv-debug=vulkan-with-source

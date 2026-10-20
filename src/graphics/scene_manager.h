@@ -22,8 +22,9 @@ struct SceneObject {
 // 场景系统 = 加载器 + 存储：
 //   - LoadDefaultScene 产出 Mesh / SceneObject 列表（今天程序化定义，
 //     之后换成文件解析也只改这一处）
-//   - 持有全场景唯一的管线 / VS+PS / 绑定布局，以及逐物体的 CB 与绑定集
-//   - Render() 逐对象绑定各自 binding set 后 drawIndexed（零 CB 写入）
+//   - 持有全场景唯一的管线 / VS+PS / 绑定布局与绑定集，
+//     以及装载所有物体常量的共享数组 CB
+//   - Render() 逐对象 push 一个数组下标后 drawIndexed（帧循环零 CB 写入）
 // BasicRenderer 只管帧级资源（相机、深度缓冲、清屏、present）
 class SceneManager {
 public:
@@ -41,10 +42,10 @@ private:
 
     std::vector<Mesh> m_Meshes;           // 网格存储（SceneObject 按索引引用）
     std::vector<SceneObject> m_Objects;   // 对象存储
-    // 每物体一个 CB：内容（变换 + 材质）静态，加载时一次性写入，
-    // 帧循环零 writeBuffer
-    std::vector<ConstantBuffer<ObjectConstants>> m_ObjectCBs;
-    std::vector<nvrhi::BindingSetHandle> m_ObjectBindingSets;  // b0 共享相机 + b1 各自的 CB
+    // 所有物体常量装进一个共享数组 CB（b1），加载时一次性写入（内容静态）；
+    // 每个 draw 用 push constants（b2）传自己的数组下标
+    ConstantBuffer<ObjectConstantsArray> m_ObjectCB;
+    nvrhi::BindingSetHandle m_BindingSet;  // b0 相机 + b1 常量数组 + b2 push constants
 
     nvrhi::ShaderHandle m_VertexShader;         // 全场景唯一
     nvrhi::ShaderHandle m_PixelShader;
